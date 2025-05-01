@@ -15,8 +15,6 @@ namespace HFantasy.Script.Core
 
         void Start()
         {
-            
-
             ConfigResManager.Instance.LoadPlayerAppearanceConfig();
 
             SaveSystem.CreateNewSave("save1");
@@ -26,7 +24,7 @@ namespace HFantasy.Script.Core
 
             PlayerEntity myPlayer = EntityManager.Instance.CreatePlayerEntity(saveData.myPlayerInfo);
 
-            Camera.main.GetComponent<MainCameraController>().target = myPlayer.GameObject.transform;
+            Camera.main.GetComponent<MainCameraController>().target = myPlayer.PlayerObject.transform;
         }
 
         void OnDestroy()

@@ -11,12 +11,17 @@ namespace HFantasy.Script.Core
 {
     public class EntityManager : MonoSingleton<EntityManager>
     {
+        private PlayerEntity myPlayerEntity;
+        public PlayerEntity MyPlayerEntity { get => myPlayerEntity; }
+
         private readonly Dictionary<int, PlayerEntity> playerDict = new Dictionary<int, PlayerEntity>();
+
+
 
         /// <summary>
         /// 创建一个新的玩家实体
         /// </summary>
-        public PlayerEntity CreatePlayerEntity(BasicPlayerInfo playerInfo)
+        public PlayerEntity CreatePlayerEntity(BasicPlayerInfo playerInfo, bool isMyPlayer = false)
         {
             //string playerDataPath = EntityDataConfig.GetPlayerCareerCsvPath();
             //BasicPlayerInfo playerInfo = LoadPlayerSaveData(playerDataPath);
@@ -44,6 +49,10 @@ namespace HFantasy.Script.Core
             playerGO.name = $"Player_{playerInfo.Name}_{entityId}";
 
             playerDict.Add(entityId, playerEntity);
+            if (isMyPlayer)
+            {
+                myPlayerEntity = playerEntity;
+            }
 
             return playerEntity;
         }

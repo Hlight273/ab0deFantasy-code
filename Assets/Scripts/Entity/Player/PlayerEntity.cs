@@ -6,6 +6,8 @@ namespace HFantasy.Script.Entity.Player
     {
         public GameObject GameObject { get; private set; }
 
+        public GameObject PlayerObject { get; private set; }
+
         public BasicPlayerInfo Info { get ; private set ; }
 
         public PlayerEntity(int id, BasicPlayerInfo info, GameObject gameObject)
@@ -13,6 +15,7 @@ namespace HFantasy.Script.Entity.Player
             GameObject = gameObject;
             Info = info;
             Id = id;
+            PlayerObject = gameObject.transform.GetChild(0).gameObject; 
         }
 
         public PlayerEntity()

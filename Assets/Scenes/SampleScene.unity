@@ -4177,6 +4177,65 @@ Transform:
   m_Children: []
   m_Father: {fileID: 178047498}
   m_LocalEulerAnglesHint: {x: -180, y: 0, z: 0}
+--- !u!1 &1086504603
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1086504605}
+  - component: {fileID: 1086504604}
+  m_Layer: 0
+  m_Name: Debug
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1086504604
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1086504603}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fccba38ec7d2cc24e944e4e6f784113d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  mouseSensitivity: 0
+  minPitch: 0
+  maxPitch: 0
+  rotationSmoothSpeed: 0
+  positionSmoothTime: 0
+  followDistance: 0
+  minFollowDistance: 0
+  maxFollowDistance: 0
+  zoomSpeed: 0
+  cameraHeightOffset: 0
+  shoulderOffsetX: 0
+  cameraFix25DHeightOffset: 0
+  cameraFix25DDistanceOffset: 0
+  cameraFix25DRotationEuler: {x: 0, y: 0, z: 0}
+  applyEveryFrame: 1
+--- !u!4 &1086504605
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1086504603}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -1.9605937, y: 1.1930146, z: -7.022687}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &1093209427
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -8147,3 +8206,4 @@ SceneRoots:
   - {fileID: 178047498}
   - {fileID: 1161458904}
   - {fileID: 1979845291}
+  - {fileID: 1086504605}

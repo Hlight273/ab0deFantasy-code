@@ -26,7 +26,7 @@ namespace HFantasy.Script.Player.Animation
         {
             bool isWalking = playerMovement.IsWalking;
             bool isJumping = playerMovement.IsJumpping;
-            Debug.LogWarning("isWalking:" + isWalking + ",isJumping:" + isJumping);
+            //Debug.LogWarning("isWalking:" + isWalking + ",isJumping:" + isJumping);
             animator.SetBool(AnimationConstant.Walk, isWalking);
             animator.SetBool(AnimationConstant.Jump, isJumping);
         }
