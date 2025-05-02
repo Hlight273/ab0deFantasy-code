@@ -1,5 +1,5 @@
-using HFantasy.Script.Player.Camera.Follow;
-using HFantasy.Script.Player.Camera.Person;
+using HFantasy.Script.Player.PlayerCamera.Follow;
+using HFantasy.Script.Player.PlayerCamera.Person;
 using UnityEngine;
 
 namespace HFantasy.Script.Core

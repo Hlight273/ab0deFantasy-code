@@ -10,15 +10,15 @@ namespace HFantasy.Script.Core.CoreConfig
         public static float maxPitch = 90f;
 
         public static float rotationSmoothSpeed = 40f;//平滑插值旋转参数
-        public static float positionSmoothTime = 0.02f;//平滑插值移动参数
+        public static float positionSmoothTime = 0.0095f;//平滑插值移动参数
 
         public static float followDistance = 5.5f;
-        public static float minFollowDistance = 2.5f; //最小缩放距离
+        public static float minFollowDistance = 2.2f; //最小缩放距离
         public static float maxFollowDistance = 8.0f; //最大缩放距离
 
         public static float zoomSpeed = 0.5f;
 
-        public static float cameraHeightOffset = 1.5f;
+        public static float cameraHeightOffset = 1.86f;
         
         public static float shoulderOffsetX = 0.5f;
 

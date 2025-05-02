@@ -21,7 +21,7 @@ namespace HFantasy.Script.Core
         /// <summary>
         /// 创建一个新的玩家实体
         /// </summary>
-        public PlayerEntity CreatePlayerEntity(BasicPlayerInfo playerInfo, bool isMyPlayer = false)
+        public PlayerEntity CreatePlayerEntity(BasicPlayerInfo playerInfo, bool isLocalPlayer = false)
         {
             //string playerDataPath = EntityDataConfig.GetPlayerCareerCsvPath();
             //BasicPlayerInfo playerInfo = LoadPlayerSaveData(playerDataPath);
@@ -45,11 +45,11 @@ namespace HFantasy.Script.Core
             playerGO.transform.rotation = Quaternion.identity;
             GameObject bodyGO = Instantiate(bodyPrefab, playerGO.transform);
             
-            PlayerEntity playerEntity = new PlayerEntity(entityId, playerInfo, playerGO);
+            PlayerEntity playerEntity = new PlayerEntity(entityId, playerInfo, playerGO, isLocalPlayer);
             playerGO.name = $"Player_{playerInfo.Name}_{entityId}";
 
             playerDict.Add(entityId, playerEntity);
-            if (isMyPlayer)
+            if (isLocalPlayer)
             {
                 myPlayerEntity = playerEntity;
             }

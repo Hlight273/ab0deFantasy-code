@@ -20,9 +20,11 @@ namespace HFantasy.Script.Core
             SaveSystem.CreateNewSave("save1");
             SaveData saveData = SaveSystem.Load("save1");
             Transform spawnPoint = GameObject.Find("Room").transform.Find("SpawnPoint");
+            Transform dummyPoint = GameObject.Find("Room").transform.Find("DummyPlayerPoint");
             saveData.myPlayerInfo.Position = spawnPoint.position;
 
-            PlayerEntity myPlayer = EntityManager.Instance.CreatePlayerEntity(saveData.myPlayerInfo);
+            PlayerEntity myPlayer = EntityManager.Instance.CreatePlayerEntity(saveData.myPlayerInfo, true);
+            PlayerEntity testDummyPlayer = EntityManager.Instance.CreatePlayerEntity(PlayerInfoTemplate.BuildDefaultPlayerInfo(dummyPoint.position));
 
             Camera.main.GetComponent<MainCameraController>().target = myPlayer.PlayerObject.transform;
         }

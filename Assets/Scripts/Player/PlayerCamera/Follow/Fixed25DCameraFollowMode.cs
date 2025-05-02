@@ -1,7 +1,7 @@
 using HFantasy.Script.Core.CoreConfig;
 using UnityEngine;
 
-namespace HFantasy.Script.Player.Camera.Follow
+namespace HFantasy.Script.Player.PlayerCamera.Follow
 {
     public class Fixed25DCameraFollowMode : ICameraFollowMode
     {

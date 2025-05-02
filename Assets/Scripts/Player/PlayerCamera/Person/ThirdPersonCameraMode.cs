@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace HFantasy.Script.Player.Camera.Person
+namespace HFantasy.Script.Player.PlayerCamera.Person
 {
     public class ThirdPersonCameraMode : ICameraMode
     {

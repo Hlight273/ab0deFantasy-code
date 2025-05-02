@@ -17,5 +17,7 @@ namespace HFantasy.Script.Entity.Player
         public int MaxPower { get;  set; }
 
         public int Power { get;  set; }
+
+        public bool IsDummy { get; set; }
     } 
 }

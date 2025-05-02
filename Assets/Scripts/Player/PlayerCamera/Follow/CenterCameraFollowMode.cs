@@ -2,7 +2,7 @@ using HFantasy.Script.Core;
 using HFantasy.Script.Core.CoreConfig;
 using UnityEngine;
 
-namespace HFantasy.Script.Player.Camera.Follow
+namespace HFantasy.Script.Player.PlayerCamera.Follow
 {
     /// <summary>
     /// 角色居中视角相机跟随模式
