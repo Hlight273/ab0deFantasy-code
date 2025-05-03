@@ -3,7 +3,7 @@ using HFantasy.Script.Player.StateMachine.States;
 
 namespace HFantasy.Script.Player.StateMachine
 {
-    public class IdleState : BasePlayerState
+    public class IdleState : BasePlayerMoveState
     {
 
         public IdleState(ICharactorMovement movement) : base(movement)
@@ -12,7 +12,7 @@ namespace HFantasy.Script.Player.StateMachine
 
         public override void Enter()
         {
-            movement.SetAnimation(PlayerStateType.Idle);
+            movement.SetAnimation(PlayerMovementState.Idle);
         }
 
         protected override void UpdateState()

@@ -8,7 +8,7 @@ namespace HFantasy.Script.Player.Movement
 {
     public class CharactorMovementHandler : ICharactorMovement
     {
-        private readonly UnityEngine.CharacterController controller;
+        private readonly CharacterController controller;
         private readonly Animator animator;
         private readonly Transform groundCheck;
         private readonly Transform cam;
@@ -16,6 +16,7 @@ namespace HFantasy.Script.Player.Movement
 
         // 配置参数
         private readonly float moveSpeed;
+        private readonly float runSpeed;
         private readonly float jumpHeight;
         private readonly float jumpRange;
         private readonly float gravity;
@@ -36,6 +37,8 @@ namespace HFantasy.Script.Player.Movement
 
         public bool JumpPressed => InputManager.Instance.JumpPressed;
 
+        public bool IsRunning => InputManager.Instance.RunPressed;
+
         public CharactorMovementHandler(
             UnityEngine.CharacterController controller,
             Animator animator,
@@ -51,6 +54,7 @@ namespace HFantasy.Script.Player.Movement
             this.groundLayer = config.GroundLayer;
             this.groundDistance = config.GroundDistance;
             this.moveSpeed = config.MoveSpeed;
+            this.runSpeed = config.RunSpeed;
             this.gravity = config.Gravity;
             this.jumpHeight = config.JumpHeight;
             this.jumpRange = config.JumpRange;
@@ -60,6 +64,32 @@ namespace HFantasy.Script.Player.Movement
         }
 
         public void Move(Vector2 input)
+        {
+            Vector3 moveDirection;
+
+            if (jumpRequested)//跳跃的时候，防止滑动
+            {
+                if (jumpTimer <= jumpStartOffset || jumpTimer >= jumpEndOffset)
+                {
+                    input = Vector2.zero;
+                }
+                else
+                {
+                    input *= jumpRange;
+                }
+            }
+
+            moveDirection = GetCameraRelativeDirection(input);
+
+            if (moveDirection.magnitude > 0.01f)
+            {
+                HandleRotation(moveDirection);
+            }
+
+            controller.Move(moveDirection * moveSpeed * Time.deltaTime);
+        }
+
+        public void Run(Vector2 input)
         {
             Vector3 moveDirection;
 
@@ -82,7 +112,7 @@ namespace HFantasy.Script.Player.Movement
                 HandleRotation(moveDirection);
             }
 
-            controller.Move(moveDirection * moveSpeed * Time.deltaTime);
+            controller.Move(moveDirection * runSpeed * Time.deltaTime);
         }
 
         public void Jump()
@@ -158,24 +188,29 @@ namespace HFantasy.Script.Player.Movement
             controller.Move(velocity * Time.deltaTime);
         }
 
-        public void SetAnimation(PlayerStateType state)
+        public void SetAnimation(PlayerMovementState state)
         {
             if (animator == null) return;
 
             // 先重置所有动画状态
             animator.SetBool(AnimationConstant.Walk, false);
             animator.SetBool(AnimationConstant.Jump, false);
+            animator.SetBool(AnimationConstant.Run, false);
 
             // 设置当前状态
             switch (state)
             {
-                case PlayerStateType.Walk:
+                case PlayerMovementState.Walk:
                     animator.SetBool(AnimationConstant.Walk, true);
                     break;
-                case PlayerStateType.Jump:
+                case PlayerMovementState.Jump:
                     animator.SetBool(AnimationConstant.Jump, true);
                     break;
-                case PlayerStateType.Idle:
+                case PlayerMovementState.Run:
+                    animator.SetBool(AnimationConstant.Walk, true);
+                    animator.SetBool(AnimationConstant.Run, true);
+                    break;
+                case PlayerMovementState.Idle:
 
                     break;
             }

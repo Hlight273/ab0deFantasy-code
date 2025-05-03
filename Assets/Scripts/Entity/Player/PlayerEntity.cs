@@ -20,7 +20,7 @@ namespace HFantasy.Script.Entity.Player
             Id = id;
             PlayerObject = gameObject.transform.GetChild(0).gameObject;
             this.isLocalPlayer = isLocalPlayer;
-            PlayerMovement movement = PlayerObject.GetComponent<PlayerMovement>();
+            PlayerActions movement = PlayerObject.GetComponent<PlayerActions>();
             if (movement != null)
             {
                 movement.IsLocalPlayer = isLocalPlayer;

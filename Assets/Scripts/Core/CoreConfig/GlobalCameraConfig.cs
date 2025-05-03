@@ -18,13 +18,13 @@ namespace HFantasy.Script.Core.CoreConfig
 
         public static float zoomSpeed = 0.5f;
 
-        public static float cameraHeightOffset = 1.86f;
+        public static float cameraHeightOffset = 1.56f;
         
         public static float shoulderOffsetX = 0.5f;
 
         //2.5D用的参数
         public static float cameraFix25DHeightOffset = 5.5f;
-        public static float cameraFix25DDistanceOffset = 4.2f;
+        public static float cameraFix25DDistanceOffset = 3.85f;
         public static Quaternion cameraFix25DdRotation = Quaternion.Euler(45f, 0f, 0f);
 
         public static LayerMask collisionMask = Physics.DefaultRaycastLayers; // 可指定为“CameraCollision”层

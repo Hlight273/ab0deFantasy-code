@@ -4,18 +4,18 @@ namespace HFantasy.Script.Player.StateMachine.States
     using HFantasy.Script.Player.Movement;
     using HFantasy.Script.Player.StateMachine;
 
-    public class WalkState : BasePlayerMoveState
+    public class RunState : BasePlayerMoveState
     {
-        public WalkState(ICharactorMovement movement) : base(movement) { }
+        public RunState(ICharactorMovement movement) : base(movement) { }
 
         public override void Enter()
         {
-            movement.SetAnimation(PlayerMovementState.Walk);
+            movement.SetAnimation(PlayerMovementState.Run);
         }
 
         protected override void UpdateState()
         {
-            movement.Move(movement.MoveInput);
+            movement.Run(movement.MoveInput);
         }
 
         public override void Exit() { }

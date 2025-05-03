@@ -9,6 +9,8 @@ namespace HFantasy.Script.Player.Movement
         bool IsGrounded { get; }
         bool IsJumpping { get; }
 
+        bool IsRunning { get; }
+
 
         Vector2 MoveInput { get; }
         bool JumpPressed { get; }
@@ -16,8 +18,10 @@ namespace HFantasy.Script.Player.Movement
         // ºËÐÄÐÐÎª
         void Move(Vector2 input);
         void Jump();
-        void SetAnimation(PlayerStateType state);
+        void SetAnimation(PlayerMovementState state);
         void ResetJump();
+
+        void Run(Vector2 input);
 
         void HandlePhysics();
     }

@@ -3,7 +3,7 @@ using HFantasy.Script.Player.StateMachine.States;
 
 namespace HFantasy.Script.Player.StateMachine
 {
-    public class JumpState : BasePlayerState
+    public class JumpState : BasePlayerMoveState
     {
 
         public JumpState(ICharactorMovement movement):base(movement)
@@ -12,7 +12,7 @@ namespace HFantasy.Script.Player.StateMachine
 
         public override void Enter()
         {
-            movement.SetAnimation(PlayerStateType.Jump);
+            movement.SetAnimation(PlayerMovementState.Jump);
             movement.Jump();
         }
 

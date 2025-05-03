@@ -14,6 +14,8 @@ namespace HFantasy.Script.Configs
 
         public const string PlayerAppearanceExportPath = ResRoot + "Tables/PlayerAppearanceConfig.csv";
 
+        public const string PlayerSMLogicPath = ResRoot + "Tables/StateMachine/PlayerSMLogic.xml";
+
         public static string SaveFolder
         {
             get

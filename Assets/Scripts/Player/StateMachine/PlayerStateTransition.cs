@@ -3,20 +3,15 @@ using System;
 
 namespace HFantasy.Script.Player.StateMachine
 {
-    public enum PlayerStateType
-    {
-        Idle,
-        Walk,
-        Jump
-    }
+ 
 
-    public class StateTransition
+    public class StateTransition<T,K>
     {
-        public PlayerStateType FromState { get; }
-        public PlayerStateType ToState { get; }
-        public Func<ICharactorMovement, bool> Condition { get; }
+        public T FromState { get; }
+        public T ToState { get; }
+        public Func<K, bool> Condition { get; }
 
-        public StateTransition(PlayerStateType from, PlayerStateType to, Func<ICharactorMovement, bool> condition)
+        public StateTransition(T from, T to, Func<K, bool> condition)
         {
             FromState = from;
             ToState = to;

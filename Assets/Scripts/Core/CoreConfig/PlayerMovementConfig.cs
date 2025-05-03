@@ -7,6 +7,7 @@ namespace HFantasy.Script.Core.CoreConfig
     {
         [Header("移动参数")]
         public float MoveSpeed = 1.74f;
+        public float RunSpeed = 3.34f;
 
         [Header("跳跃参数")]
         public float JumpHeight = 0.2f;

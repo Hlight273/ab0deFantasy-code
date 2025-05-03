@@ -1,14 +1,15 @@
 namespace HFantasy.Script.Player.StateMachine.States
 {
+    using HFantasy.Script.Player.Combat;
     using HFantasy.Script.Player.Movement;
     using HFantasy.Script.Player.StateMachine;
-    public abstract class BasePlayerState : IPlayerState
+    public abstract class BasePlayerCombatState : IPlayerState
     {
-        protected readonly ICharactorMovement movement;
+        protected readonly ICharactorCombat combat;
 
-        protected BasePlayerState(ICharactorMovement movement)
+        protected BasePlayerCombatState(ICharactorCombat combat)
         {
-            this.movement = movement;
+            this.combat = combat;
         }
 
         public abstract void Enter();
@@ -16,15 +17,15 @@ namespace HFantasy.Script.Player.StateMachine.States
 
         public virtual void Update()
         {
-            HandlePhysics();
+            //HandlePhysics();
             UpdateState();
         }
 
         protected abstract void UpdateState();
 
-        private void HandlePhysics()
-        {
-            movement.HandlePhysics();
-        }
+        //private void HandlePhysics()
+        //{
+        //    movement.HandlePhysics();
+        //}
     }
 }

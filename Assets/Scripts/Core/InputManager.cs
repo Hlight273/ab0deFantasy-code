@@ -1,6 +1,8 @@
 using HFantasy.Script.Common;
 using System;
+using UnityEditor.ShaderGraph;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 
 namespace HFantasy.Script.Core
@@ -9,6 +11,8 @@ namespace HFantasy.Script.Core
     {
         public Vector2 MoveInput { get; private set; }
         public bool JumpPressed { get; private set; }
+        public bool RunPressed { get; private set; }
+        public bool AttackPressed { get; private set; }
 
         public Vector2 LookInput { get; private set; }
         private InputAction lookAction;
@@ -35,10 +39,26 @@ namespace HFantasy.Script.Core
             controls.Player.Move.performed += ctx => MoveInput = ctx.ReadValue<Vector2>();
             controls.Player.Move.canceled += _ => MoveInput = Vector2.zero;
 
+            controls.Player.Run.performed += ctx => RunPressed = true;
+            controls.Player.Run.canceled += ctx => RunPressed = false;
+
             controls.Player.Jump.performed += _ => JumpPressed = true;
 
             controls.Player.Interact.performed += _ => OnInteractPressed?.Invoke();
+            controls.Player.Attack.performed += ctx =>
+            {
+                if (!IsPointerOverUI())
+                {
+                    AttackPressed = true;
+                }
+            };
+
         }
+        //这个加到以后的按钮onclick
+        //public void OnAttackButtonClick()
+        //{
+        //    InputManager.Instance.OnAttackPressed?.Invoke();
+        //}
 
         private void Update()
         {
@@ -97,6 +117,16 @@ namespace HFantasy.Script.Core
             return delta * 0.01f; // 调整缩放敏感度
         }
 
+        private bool IsPointerOverUI()
+        {
+#if UNITY_ANDROID || UNITY_IOS
+            if (Input.touchCount > 0)
+                return EventSystem.current.IsPointerOverGameObject(Input.GetTouch(0).fingerId);
+            return false;
+#else
+            return EventSystem.current.IsPointerOverGameObject();
+#endif
+        }
 
     }
 }

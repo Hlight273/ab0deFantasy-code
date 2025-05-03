@@ -1,17 +1,19 @@
 using UnityEngine;
 using HFantasy.Script.Player.StateMachine;
 using HFantasy.Script.Core.CoreConfig;
+using HFantasy.Script.Player.Combat;
 
 namespace HFantasy.Script.Player.Movement
 {
     [RequireComponent(typeof(CharacterController))]
-    public class PlayerMovement : MonoBehaviour
+    public class PlayerActions : MonoBehaviour
     {
         [SerializeField] private PlayerMovementConfig config;
         [SerializeField] private Transform groundCheck;
 
         private ICharactorMovement movementHandler;
-        private PlayerStateMachine stateMachine;
+        private ICharactorCombat combatHandler;
+        private PlayerStateCoordinator coordinator;
         public bool IsLocalPlayer { get; set; }
 
         void Start()
@@ -25,15 +27,16 @@ namespace HFantasy.Script.Player.Movement
                 animator,
                 config,
                 groundCheck, mainCamera);
+            combatHandler = new CharactorCombatHandler(controller,animator);
 
-            stateMachine = new PlayerStateMachine(movementHandler);
-            stateMachine.ChangeState(PlayerStateType.Idle);
+            coordinator = new PlayerStateCoordinator(movementHandler, combatHandler);
+            coordinator.ChangeState(StateDomainType.Movement, PlayerMovementState.Idle);
         }
 
         void Update()
         {
             if (!IsLocalPlayer) return;
-            stateMachine?.Update();
+            coordinator.Update();
         }
     }
 }
