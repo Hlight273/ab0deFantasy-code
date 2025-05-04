@@ -2,25 +2,26 @@ using UnityEngine;
 
 namespace HFantasy.Script.Core.CoreConfig
 {
-    [CreateAssetMenu(fileName = "MovementConfig", menuName = "´´½¨ÅäÖÃ/Movement")]
+    [CreateAssetMenu(fileName = "MovementConfig", menuName = "ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½/Movement")]
     public class PlayerMovementConfig : ScriptableObject
     {
-        [Header("ÒÆ¶¯²ÎÊý")]
+        [Header("ï¿½Æ¶ï¿½ï¿½ï¿½ï¿½ï¿½")]
         public float MoveSpeed = 1.74f;
         public float RunSpeed = 3.34f;
 
-        [Header("ÌøÔ¾²ÎÊý")]
+        [Header("ï¿½ï¿½Ô¾ï¿½ï¿½ï¿½ï¿½")]
         public float JumpHeight = 0.2f;
         public float JumpRange = 2.48f;
         public float Gravity = -9.81f;
 
-        [Header("ÆðÌøºÍµ½µØÃæÆ«ÒÆÊ±¼ä")]
+        [Header("ï¿½ï¿½ï¿½ï¿½ï¿½Íµï¿½ï¿½ï¿½ï¿½ï¿½Æ«ï¿½ï¿½Ê±ï¿½ï¿½")]
         public float JumpStartOffset = 0.75f;
         public float JumpEndOffset = 1.64f;
         public float JumpEndTime = 1.85f;
 
-        [Header("µØÃæ¼ì²â")]
+        [Header("ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½")]
         public LayerMask GroundLayer;
         public float GroundDistance = 0.4f;
+        public float RunSpeedMultiplier = 2f;
     }
 }

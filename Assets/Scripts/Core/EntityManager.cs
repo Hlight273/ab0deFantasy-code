@@ -65,5 +65,13 @@ namespace HFantasy.Script.Core
             return playerDict.TryGetValue(entityId, out var entity) ? entity : null;
         }
 
+        private void Update()
+        {
+            foreach (var player in playerDict.Values)
+            {
+                player.Update();
+            }
+        }
+
     }
 }

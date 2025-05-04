@@ -67,13 +67,13 @@ namespace HFantasy.Script.Core.Save
                 {
                     AppearanceData = new()
                     {
-                        BodyId = 1, 
-                        HairId = 1, 
+                        BodyId = 1,
+                        HairId = 1,
                         ArmorId = 1,
                         SkinColor = Color.white,
                         HairColor = Color.white,
                     },
-                    LV=1,
+                    LV = 1,
                     Name = "DefaultName",
                     Position = new Vector3(0, 0, 0),
                     MaxLife = 100,

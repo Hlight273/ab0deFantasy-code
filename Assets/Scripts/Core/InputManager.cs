@@ -26,7 +26,7 @@ namespace HFantasy.Script.Core
 
         private PlayerControls controls;
 
-        
+        private bool CanInput => !(EntityManager.Instance.MyPlayerEntity == null || EntityManager.Instance.MyPlayerEntity.RuntimeInfo.IsHitstun);
 
         protected override void Awake()
         {
@@ -36,18 +36,19 @@ namespace HFantasy.Script.Core
             lookAction = controls.Player.Look;
             zoomAction = controls.Player.Zoom;
 
-            controls.Player.Move.performed += ctx => MoveInput = ctx.ReadValue<Vector2>();
+            controls.Player.Move.performed += ctx => MoveInput = CanInput ? ctx.ReadValue<Vector2>(): Vector2.zero;
             controls.Player.Move.canceled += _ => MoveInput = Vector2.zero;
 
-            controls.Player.Run.performed += ctx => RunPressed = true;
+            controls.Player.Run.performed += ctx => RunPressed = CanInput;
+            
             controls.Player.Run.canceled += ctx => RunPressed = false;
 
-            controls.Player.Jump.performed += _ => JumpPressed = true;
+            controls.Player.Jump.performed += _ => JumpPressed = CanInput;
 
             controls.Player.Interact.performed += _ => OnInteractPressed?.Invoke();
             controls.Player.Attack.performed += ctx =>
             {
-                if (!IsPointerOverUI())
+                if (!IsPointerOverUI() && CanInput)
                 {
                     AttackPressed = true;
                 }
@@ -69,6 +70,7 @@ namespace HFantasy.Script.Core
         private void LateUpdate()
         {
             JumpPressed = false;
+            AttackPressed = false;
         }
 
         private void OnEnable() => controls.Enable();

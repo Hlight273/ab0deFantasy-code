@@ -6,7 +6,7 @@ namespace HFantasy.Script.Common.Constant
         public const string Walk = "Walk";
         public const string Run = "Run";
         public const string Jump = "Jump";
-        public const string Boxing = "Boxing";
+        public const string Combat = "Combat";
         public const string BoxingHit = "BoxingHit";
         public const string BoxingKick = "BoxingKick";
         public const string Death = "Death";
