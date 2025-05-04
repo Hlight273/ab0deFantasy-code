@@ -108,10 +108,23 @@ namespace HFantasy.Script.Entity.Player
             Info.IsDead = true;
         }
 
+        int i = 0;
         public void Update()
         {
             if (RuntimeInfo.AttackTimer > 0)
+            {
+                i++;
                 RuntimeInfo.AttackTimer -= Time.deltaTime;
+                Debug.Log($"{i},AttackTimer: {RuntimeInfo.AttackTimer}");
+            }
+
+            if (RuntimeInfo.AttackRecoveryTimer > 0)
+            
+                RuntimeInfo.AttackRecoveryTimer -= Time.deltaTime;
+            
+
+
+
             if (RuntimeInfo.CombatStateTimer > 0)
                 RuntimeInfo.CombatStateTimer -= Time.deltaTime;
             if (RuntimeInfo.HitstunTimer > 0)

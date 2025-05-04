@@ -115,18 +115,24 @@ namespace HFantasy.Script.Player.PlayerCamera.Follow
             // 根据旋转和距离计算目标相机位置
             Vector3 desiredCameraPos = focusPoint - currentRotation * Vector3.forward * currentFollowDistance;
 
+            float smoothTime = GlobalCameraConfig.positionSmoothTime;
+
             // 处理碰撞（防止穿墙）
             RaycastHit hit;
             Vector3 direction = desiredCameraPos - focusPoint;
+
+          
 
             if (Physics.Raycast(focusPoint, direction.normalized, out hit, currentFollowDistance, GlobalCameraConfig.collisionMask))
             {
                 // 调整目标位置为碰撞点稍前一点，避免直接贴墙
                 desiredCameraPos = focusPoint + direction.normalized * (hit.distance - 0.2f);
+                if (direction.magnitude <= 6f)
+                    smoothTime *= 5f; // 如果距离很短，增加平滑时间，避免抖动
             }
 
             // 平滑移动相机到目标位置
-            cam.position = Vector3.SmoothDamp(cam.position, desiredCameraPos, ref currentVelocity, GlobalCameraConfig.positionSmoothTime);
+            cam.position = Vector3.SmoothDamp(cam.position, desiredCameraPos, ref currentVelocity, smoothTime);
         }
     }
 }

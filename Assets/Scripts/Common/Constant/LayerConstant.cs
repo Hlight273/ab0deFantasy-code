@@ -21,6 +21,7 @@ namespace HFantasy.Script.Common.Constant
             public static readonly int EnemyMask = 1 << Enemy;
             public static readonly int NPCMask = 1 << NPC;
             public static readonly int CanPlayerAttackMask = PlayerMask | EnemyMask | NPCMask;
+            public static readonly int ExcludeIgnoreRaycastAndPlayerMask = ~(1 << IgnoreRaycast | 1 << Player);
 
         }
 

@@ -1,4 +1,5 @@
 using HFantasy.Script.Common;
+using HFantasy.Script.Common.Constant;
 using HFantasy.Script.Commonpublic;
 using HFantasy.Script.Configs;
 using HFantasy.Script.Core.Resource;
@@ -41,6 +42,7 @@ namespace HFantasy.Script.Core
 
             int entityId = EntityIdGenerator.GetNextId();
             GameObject playerGO = new GameObject($"Player_{playerInfo.Name}_{entityId}"); //这里额外创建一个玩家的父物体
+            playerGO.layer = LayerConstant.Player;
             playerGO.transform.position = playerInfo.Position;
             playerGO.transform.rotation = Quaternion.identity;
             GameObject bodyGO = Instantiate(bodyPrefab, playerGO.transform);

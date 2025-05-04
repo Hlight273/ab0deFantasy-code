@@ -19,7 +19,7 @@ namespace HFantasy.Script.Player.Actions.StateMachine.States
                 Context.StateManager.TransitionTo<WalkState>();
             else if (Context.Movement.JumpPressed)
                 Context.StateManager.TransitionTo<JumpState>();
-            else if (Context.Combat.AttackPressed)
+            else if (Context.Combat.CanAttack)
                 Context.StateManager.TransitionTo<BoxingHitState>();
         }
 

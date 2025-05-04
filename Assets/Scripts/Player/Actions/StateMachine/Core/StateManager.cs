@@ -25,7 +25,7 @@ namespace HFantasy.Script.Player.Actions.StateMachine.Core
         public void Update()
         {
             currentState?.Update();
-            //UnityEngine.Debug.LogWarning(currentState.GetType()); //´òÓ¡Íæ¼Ò×´Ì¬»ú×´Ì¬
+            UnityEngine.Debug.LogWarning(currentState.GetType()); //´òÓ¡Íæ¼Ò×´Ì¬»ú×´Ì¬
         }
     } 
 }

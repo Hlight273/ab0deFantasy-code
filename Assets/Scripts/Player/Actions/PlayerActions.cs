@@ -54,7 +54,7 @@ namespace HFantasy.Script.Player.Actions
             combat = new CharactorCombatHandler(playerEntity, controller, animator);
 
             stateManager = new StateManager();
-            context = new PlayerContext(movement, combat, animator, stateManager);
+            context = new PlayerContext(movement, combat, animator, stateManager, playerEntity);
 
             InitializeStates();
         }

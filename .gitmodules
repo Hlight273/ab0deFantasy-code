@@ -1,3 +1,4 @@
 [submodule "Assets/Res"]
 	path = Assets/Res
 	url = https://github.com/Hlight273/ab0deFantasy-asset.git
+	ignore = all

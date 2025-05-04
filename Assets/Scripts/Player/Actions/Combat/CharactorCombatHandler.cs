@@ -34,11 +34,16 @@ namespace HFantasy.Script.Player.Actions.Combat
 
         public bool AttackPressed => InputManager.Instance.AttackPressed;
 
+        public bool CanAttack => AttackPressed && playerEntity != null && playerEntity.RuntimeInfo.CanAttack;
+
+        public bool IsAttackRecovering => playerEntity?.RuntimeInfo?.AttackRecoveryTimer > 0;
+
         public CharactorCombatHandler(PlayerEntity playerEntity, CharacterController controller, Animator animator)
         {
             this.playerEntity = playerEntity;
             this.controller = controller;
             this.animator = animator;
+
         }
 
         public void PerformAttack()
@@ -46,6 +51,7 @@ namespace HFantasy.Script.Player.Actions.Combat
             if (playerEntity == null || playerEntity.RuntimeInfo == null) return;
             playerEntity.RuntimeInfo.AttackTimer = playerEntity.RuntimeInfo.attackDuration;//恢复攻击计时和战斗计时
             playerEntity.RuntimeInfo.CombatStateTimer = playerEntity.RuntimeInfo.combatStateDuration;
+            playerEntity.RuntimeInfo.AttackRecoveryTimer = playerEntity.RuntimeInfo.attackRecoveryDuration;
 
             //发布攻击开始事件
             EventManager.Instance.Publish(new CombatEventData(

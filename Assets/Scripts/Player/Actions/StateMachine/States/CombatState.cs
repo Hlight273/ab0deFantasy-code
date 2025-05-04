@@ -14,7 +14,7 @@ namespace HFantasy.Script.Player.Actions.StateMachine.States
 
         public override void Update()
         {
-            if (Context.Combat.AttackPressed)
+            if (Context.Combat.CanAttack)
                 Context.StateManager.TransitionTo<BoxingHitState>();
             else if (!Context.Combat.IsCombatState)
                 Context.StateManager.TransitionTo<IdleState>();

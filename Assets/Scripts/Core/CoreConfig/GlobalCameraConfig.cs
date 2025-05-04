@@ -1,3 +1,4 @@
+using HFantasy.Script.Common.Constant;
 using UnityEngine;
 
 namespace HFantasy.Script.Core.CoreConfig
@@ -27,6 +28,6 @@ namespace HFantasy.Script.Core.CoreConfig
         public static float cameraFix25DDistanceOffset = 3.85f;
         public static Quaternion cameraFix25DdRotation = Quaternion.Euler(45f, 0f, 0f);
 
-        public static LayerMask collisionMask = Physics.DefaultRaycastLayers; // 可指定为“CameraCollision”层
+        public static LayerMask collisionMask = LayerConstant.Masks.ExcludeIgnoreRaycastAndPlayerMask;//玩家和igonoreraycast的layer不碰撞
     }
 }
