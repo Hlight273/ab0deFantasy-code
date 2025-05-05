@@ -15,6 +15,9 @@ namespace HFantasy.Script.Core
         private PlayerEntity myPlayerEntity;
         public PlayerEntity MyPlayerEntity { get => myPlayerEntity; }
 
+        public Dictionary<int, PlayerEntity> PlayerDict => playerDict;
+
+
         private readonly Dictionary<int, PlayerEntity> playerDict = new Dictionary<int, PlayerEntity>();
 
 
@@ -50,7 +53,7 @@ namespace HFantasy.Script.Core
             PlayerEntity playerEntity = new PlayerEntity(entityId, playerInfo, playerGO, isLocalPlayer);
             playerGO.name = $"Player_{playerInfo.Name}_{entityId}";
 
-            playerDict.Add(entityId, playerEntity);
+            PlayerDict.Add(entityId, playerEntity);
             if (isLocalPlayer)
             {
                 myPlayerEntity = playerEntity;
@@ -64,12 +67,12 @@ namespace HFantasy.Script.Core
         /// </summary>
         public PlayerEntity GetPlayerEntity(int entityId)
         {
-            return playerDict.TryGetValue(entityId, out var entity) ? entity : null;
+            return PlayerDict.TryGetValue(entityId, out var entity) ? entity : null;
         }
 
         private void Update()
         {
-            foreach (var player in playerDict.Values)
+            foreach (var player in PlayerDict.Values)
             {
                 player.Update();
             }

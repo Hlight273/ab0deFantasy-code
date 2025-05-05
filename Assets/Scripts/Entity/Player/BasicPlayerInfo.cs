@@ -23,6 +23,9 @@ namespace HFantasy.Script.Entity.Player
         public bool IsDead  { get; set; }//角色死亡动画之后设为true
 
         public float PlayerHeight { get; set; }
+
+        public float PlayerViewHeight { get; set; }//血条位置
+
         public float PlayerDeadHeight { get; set; }
 
         public BasicPlayerInfo()
@@ -37,6 +40,7 @@ namespace HFantasy.Script.Entity.Player
             Power = 100;
             IsDummy = false;
             PlayerHeight = 2.29f;
+            PlayerViewHeight = 2f;
             PlayerDeadHeight = 0.2f;
         }
     } 
