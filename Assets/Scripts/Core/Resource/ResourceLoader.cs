@@ -5,7 +5,7 @@ namespace HFantasy.Script.Core.Resource {
     {
         private static IResourceLoader loader;
 
-        private static bool isEditorMode = false;
+        private static bool isEditorMode = true;
 
         static ResourceLoader()
         {

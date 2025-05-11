@@ -115,7 +115,7 @@ namespace HFantasy.Script.Entity.Player
             {
                 i++;
                 RuntimeInfo.AttackTimer -= Time.deltaTime;
-                Debug.Log($"{i},AttackTimer: {RuntimeInfo.AttackTimer}");
+                //Debug.Log($"{i},AttackTimer: {RuntimeInfo.AttackTimer}");
             }
 
             if (RuntimeInfo.AttackRecoveryTimer > 0)

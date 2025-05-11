@@ -24,9 +24,11 @@ namespace HFantasy.Script.Core
         private float lastPinchDistance = 0f;
         private InputAction zoomAction;
 
-        public event Action OnInteractPressed;//按交互
+        public event Action OnInteractPressed;//按F交互
+        private bool hasInteractableTarget;
+        public bool HasInteractableTarget => hasInteractableTarget && !IsPointerOverUI();//当前是否指着可交互物体
 
-        public event Action OnCameraModeChanged;//切换相机视角
+        public event Action OnCameraModeChanged;//F1F2或者按钮切换相机视角
 
         private PlayerControls controls;
 
@@ -171,6 +173,11 @@ namespace HFantasy.Script.Core
 #else
             return EventSystem.current.IsPointerOverGameObject();
 #endif
+        }
+
+        public void SetInteractableTarget(bool hasTarget)
+        {
+            hasInteractableTarget = hasTarget;
         }
 
         public void OnMobileJumpPressed()

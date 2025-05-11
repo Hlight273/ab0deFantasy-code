@@ -1,8 +1,7 @@
 using HFantasy.Script.Core;
-using HFantasy.Script.Player.Interaction;
 using UnityEngine;
 
-namespace HFantasy
+namespace HFantasy.Script.Player.Interaction
 {
     public class PlayerInteraction : MonoBehaviour
     {
@@ -18,17 +17,43 @@ namespace HFantasy
             InputManager.Instance.OnInteractPressed -= TryInteract;
         }
 
+        private void Update()
+        {
+            //获取鼠标位置并转换为世界坐标
+            Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+            RaycastHit hit;
+            if (Physics.Raycast(ray, out hit, interactionDistance, interactableLayer))
+            {
+                //Debug.LogWarning(hit.transform.gameObject.name);
+                //更新状态
+                if (hit.collider.GetComponent<IInteractable>() != null)
+                {
+                    InputManager.Instance.SetInteractableTarget(true);
+                }
+                else
+                {
+                    InputManager.Instance.SetInteractableTarget(false);
+                }
+            }
+            else
+            {
+                InputManager.Instance.SetInteractableTarget(false);
+            }
+        }
 
         private void TryInteract()
         {
-            RaycastHit2D hit = Physics2D.Raycast(transform.position, transform.right, interactionDistance, interactableLayer);
+            if (!InputManager.Instance.HasInteractableTarget) return;
 
-            if (hit.collider != null)
+            Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+            RaycastHit hit;
+
+            if (Physics.Raycast(ray, out hit, interactionDistance, interactableLayer))
             {
                 IInteractable interactable = hit.collider.GetComponent<IInteractable>();
                 if (interactable != null)
                 {
-                    interactable.Interact();  // 调用交互方法
+                    interactable.Interact();
                 }
             }
         }
