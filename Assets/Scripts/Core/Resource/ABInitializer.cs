@@ -15,10 +15,14 @@ namespace HFantasy.Script.Core.Resource
 
         void Start()
         {
+#if !UNITY_ANDROID
+            return;
+#else
             streamingABPath = Path.Combine(Application.streamingAssetsPath, "AssetBundle");
             persistentABPath = Path.Combine(Application.persistentDataPath, "AssetBundle");
 
             StartCoroutine(CopyABFilesIfNeeded());
+#endif
         }
 
         private IEnumerator CopyABFilesIfNeeded()

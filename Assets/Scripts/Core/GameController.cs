@@ -22,6 +22,7 @@ namespace HFantasy.Script.Core
 
         private IEnumerator InitGame()
         {
+#if UNITY_ANDROID
             //清理持久化目录中的 AB 包
             string persistentABPath = Path.Combine(Application.persistentDataPath, "AssetBundle");
             if (Directory.Exists(persistentABPath))
@@ -47,6 +48,7 @@ namespace HFantasy.Script.Core
                 ABInitializer.OnABInitialized -= onInitialized;
             }
             Debug.Log("xxx:" + ABInitializer.IsInitialized);
+#endif
 
             //初始化玩家信息
             ConfigResManager.Instance.LoadPlayerAppearanceConfig();
@@ -64,6 +66,7 @@ namespace HFantasy.Script.Core
             testDummyPlayer2.Info.Life = 99999;
 
             Camera.main.GetComponent<MainCameraController>().target = myPlayer.PlayerObject.transform;
+            yield return null;
         }
 
         void OnDestroy()
