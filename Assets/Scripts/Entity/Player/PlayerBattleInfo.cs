@@ -44,7 +44,7 @@ namespace HFantasy.Script.Entity.Player
         public PlayerBattleInfo(int lv)
         {
             BaseAttackSpeed = 1f;  //默认基础攻速为1
-            AttackSpeed = 100f;
+            AttackSpeed = 20f;
             AttackInterval = AttackSpeedToInterval(AttackSpeed);
             AttackRange = 1.0f;
             AttackHeightDis = 0.8f;

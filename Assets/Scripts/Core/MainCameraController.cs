@@ -1,53 +1,82 @@
 using HFantasy.Script.Player.PlayerCamera.Follow;
 using HFantasy.Script.Player.PlayerCamera.Person;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace HFantasy.Script.Core
 {
     public class MainCameraController : MonoBehaviour
     {
-        public Transform target;
+        public enum CameraFollowMode
+        {
+            Center,
+            Fixed25D,
+        }
 
+        public Transform target;
         private ICameraMode currentMode;
         private ICameraFollowMode currentFollow;
+        private CameraFollowMode currentFollowMode = CameraFollowMode.Center;
 
-        private ThirdPersonCameraMode tpsMode = new ThirdPersonCameraMode();
-        private FirstPersonCameraMode fpsMode = new FirstPersonCameraMode();
+        private readonly Dictionary<CameraFollowMode, ICameraFollowMode> followModes;
 
-        private CenterCameraFollowMode centerFollow = new CenterCameraFollowMode();
-        private Fixed25DCameraFollowMode fixed25DFollow = new Fixed25DCameraFollowMode();
+        public MainCameraController()
+        {
+            followModes = new Dictionary<CameraFollowMode, ICameraFollowMode>
+            {
+                { CameraFollowMode.Center, new CenterCameraFollowMode() },
+                { CameraFollowMode.Fixed25D, new Fixed25DCameraFollowMode() }
+            };
+        }
 
         void Start()
         {
-            SwitchToCenterFollowView();
+            SwitchCameraMode(CameraFollowMode.Center);
+            InputManager.Instance.OnCameraModeChanged += OnCameraModeChanged;
         }
 
         void LateUpdate()
         {
-            //if (Input.GetKeyDown(KeyCode.F1)) SwitchToFPS();
-            //if (Input.GetKeyDown(KeyCode.F2)) SwitchToTPS();
-            if (Input.GetKeyDown(KeyCode.F1)) SwitchToCenterFollowView();
-            if (Input.GetKeyDown(KeyCode.F2)) SwitchTo25DView();
+            if (Input.GetKeyDown(KeyCode.F1)) SwitchCameraMode(CameraFollowMode.Center);
+            if (Input.GetKeyDown(KeyCode.F2)) SwitchCameraMode(CameraFollowMode.Fixed25D);
 
-            //currentMode?.UpdateCamera(transform, target);
-            currentFollow?.UpdateFollow(transform, target, InputManager.Instance.LookInput, InputManager.Instance.ZoomInput);
+            if (currentFollow != null && transform != null)
+            {
+                currentFollow.UpdateFollow(transform, target, InputManager.Instance.LookInput, InputManager.Instance.ZoomInput);
+            }
+            else Debug.LogWarning("相机跟随有空对象");
         }
 
-        public void SwitchToTPS() => currentMode = tpsMode;
-        public void SwitchToFPS() => currentMode = fpsMode;
-
-        public void SwitchToCenterFollowView()
+        private void OnCameraModeChanged()
         {
-            Cursor.lockState = CursorLockMode.Locked;
-            Cursor.visible = false;
-            currentFollow = centerFollow;
+            //循环切换
+            currentFollowMode = (CameraFollowMode)(((int)currentFollowMode + 1) % System.Enum.GetValues(typeof(CameraFollowMode)).Length);
+            SwitchCameraMode(currentFollowMode);
         }
 
-        public void SwitchTo25DView()
+        public void SwitchCameraMode(CameraFollowMode mode)
         {
-            Cursor.lockState = CursorLockMode.None;
-            Cursor.visible = true;
-            currentFollow = fixed25DFollow;
+            currentFollowMode = mode;
+            currentFollow = followModes[mode];
+
+            //设置光标状态
+            switch (mode)
+            {
+                case CameraFollowMode.Center:
+                    Cursor.lockState = CursorLockMode.Locked;
+                    Cursor.visible = false;
+                    break;
+                case CameraFollowMode.Fixed25D:
+                    Cursor.lockState = CursorLockMode.None;
+                    Cursor.visible = true;
+                    break;
+            }
+        }
+
+        void OnDestroy()
+        {
+            if (InputManager.Instance != null)
+                InputManager.Instance.OnCameraModeChanged -= OnCameraModeChanged;
         }
     }
 }

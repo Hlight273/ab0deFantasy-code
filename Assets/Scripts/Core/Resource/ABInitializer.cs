@@ -7,6 +7,9 @@ namespace HFantasy.Script.Core.Resource
 {
     public class ABInitializer : MonoBehaviour
     {
+        public static event System.Action OnABInitialized;
+        public static bool IsInitialized { get; private set; }
+
         private string streamingABPath;
         private string persistentABPath;
 
@@ -20,50 +23,93 @@ namespace HFantasy.Script.Core.Resource
 
         private IEnumerator CopyABFilesIfNeeded()
         {
+            if (!Directory.Exists(persistentABPath))
+            {
+                Directory.CreateDirectory(persistentABPath);
+            }
             if (Directory.Exists(persistentABPath) && Directory.GetFiles(persistentABPath).Length > 0)
             {
                 Debug.Log("AB资源已存在，无需拷贝");
+                IsInitialized = true;
+                OnABInitialized?.Invoke();
                 yield break;
             }
 
-            Debug.Log("正在首次拷贝 AB 包...");
+#if UNITY_ANDROID
+             Debug.Log("Android平台，开始拷贝AB包...");
 
-#if UNITY_ANDROID && !UNITY_EDITOR
-            // Android 需使用 UnityWebRequest 访问 jar:file:// 路径
-            string manifestPath = streamingABPath + "/AssetBundle"; // 主包用于枚举
-            UnityWebRequest manifestRequest = UnityWebRequestAssetBundle.GetAssetBundle(manifestPath);
-            yield return manifestRequest.SendWebRequest();
+            string abRoot = "AssetBundle/Android";
+            string manifestFilePath = $"jar:file://{Application.dataPath}!/assets/{abRoot}/Android";
+            Debug.Log("主AB包文件路径: " + manifestFilePath);
 
-            if (manifestRequest.result != UnityWebRequest.Result.Success)
+            using (UnityWebRequest www = UnityWebRequestAssetBundle.GetAssetBundle(manifestFilePath))
             {
-                Debug.LogError("获取 AB 清单失败: " + manifestRequest.error);
-                yield break;
-            }
+                yield return www.SendWebRequest();
 
-            // 可在 manifest 中手动记录所有资源列表，或这里写死
-            string[] bundlesToCopy = new string[] { "AssetBundle" }; // 自行补全或从远程拉取配置
-
-            foreach (var bundleName in bundlesToCopy)
-            {
-                string srcPath = streamingABPath + "/" + bundleName;
-                string destPath = Path.Combine(persistentABPath, bundleName);
-
-                UnityWebRequest request = UnityWebRequest.Get(srcPath);
-                yield return request.SendWebRequest();
-
-                if (request.result != UnityWebRequest.Result.Success)
+                if (www.result != UnityWebRequest.Result.Success)
                 {
-                    Debug.LogError("拷贝失败: " + bundleName + " -> " + request.error);
-                    continue;
+                    Debug.LogError($"主AB包文件加载失败：{www.error}，路径：{manifestFilePath}");
+                    yield break;
                 }
 
-                if (!Directory.Exists(persistentABPath))
-                    Directory.CreateDirectory(persistentABPath);
+                Debug.Log("主AB包文件下载成功，准备加载...");
+                AssetBundle manifestAB = DownloadHandlerAssetBundle.GetContent(www);
+                
+                if (manifestAB == null)
+                {
+                    Debug.LogError("主AB包加载失败");
+                    yield break;
+                }
 
-                File.WriteAllBytes(destPath, request.downloadHandler.data);
-                Debug.Log("拷贝完成: " + bundleName);
+                // 获取所有资源名称进行调试
+                string[] assetNames = manifestAB.GetAllAssetNames();
+                Debug.Log($"主AB包内资源列表：");
+                foreach (var name in assetNames)
+                {
+                    Debug.Log($"- {name}");
+                }
+
+                AssetBundleManifest manifest = manifestAB.LoadAsset<AssetBundleManifest>("AssetBundleManifest");
+                if (manifest == null)
+                {
+                    Debug.LogError("解析 AssetBundleManifest 失败！");
+                    manifestAB.Unload(false);
+                    yield break;
+                }
+
+                //对于其他AB包，也使用AssetBundle方式加载
+                string[] abNames = manifest.GetAllAssetBundles();
+                foreach (string abName in abNames)
+                {
+                    //移除路径中多余的"Res/"前缀，因为AB包的bundlename是Res/xxx 但是安卓都会变成大写路径
+                    //string fileName = abName.Replace("Res/", "");
+                    string abFilePath = $"jar:file://{Application.dataPath}!/assets/{abRoot}/{abName}";
+                    string destPath = Path.Combine(persistentABPath, abName);
+
+                    Debug.Log($"准备拷贝: {abName}，路径：{abFilePath}");
+
+                    using (UnityWebRequest abRequest = UnityWebRequest.Get(abFilePath))  // 改用普通Get请求
+                    {
+                        yield return abRequest.SendWebRequest();
+
+                        if (abRequest.result != UnityWebRequest.Result.Success)
+                        {
+                            Debug.LogError($"AB包加载失败: {abFilePath} - {abRequest.error}");
+                            continue;
+                        }
+
+                        // 直接获取下载的原始数据
+                        byte[] abData = abRequest.downloadHandler.data;
+                        if (abData != null)
+                        {
+                            File.WriteAllBytes(destPath, abData);
+                            Debug.Log($"成功拷贝AB包: {abName} 到 {destPath}");
+                        }
+                    }
+                }
+
+                manifestAB.Unload(false);
             }
-
 #else
             // Windows, iOS, macOS, 编辑器环境
             if (Directory.Exists(streamingABPath))
@@ -89,6 +135,8 @@ namespace HFantasy.Script.Core.Resource
             }
 #endif
 
+            IsInitialized = true;
+            OnABInitialized?.Invoke();
             Debug.Log("首次拷贝 AB 包完成！");
             Destroy(gameObject);
         }

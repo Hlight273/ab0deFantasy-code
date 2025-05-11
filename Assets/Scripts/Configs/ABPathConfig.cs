@@ -10,7 +10,11 @@ namespace HFantasy.Script.Configs
 #if UNITY_EDITOR
             return GetEditorABRootPath();  //编辑器下使用自定义目录
 #elif UNITY_ANDROID
-        return Application.persistentDataPath + "/AssetBundle"; //安卓下走可写目录
+        // Android平台先检查persistentDataPath，如果没有再从streamingAssets加载
+        string persistentPath = Path.Combine(Application.persistentDataPath, "AssetBundle", GetPlatformFolderName());
+        if (Directory.Exists(persistentPath))
+                return persistentPath;
+        return Path.Combine(Application.streamingAssetsPath, "AssetBundle", GetPlatformFolderName());
 #elif UNITY_IOS
         return Application.persistentDataPath + "/AssetBundle"; //iOS
 #else

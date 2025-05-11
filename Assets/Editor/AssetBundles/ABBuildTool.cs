@@ -89,10 +89,10 @@ namespace HFantasy.Editor.AssetBundles
                 }
 
                 // ¸´ÖÆ Res ÎÄ¼þ¼Ð
-                string resFolderPath = Path.Combine(abTempOutput, "Res");
+                string resFolderPath = Path.Combine(abTempOutput, "res");
                 if (Directory.Exists(resFolderPath))
                 {
-                    string destResFolder = Path.Combine(streamingTargetPath, "Res");
+                    string destResFolder = Path.Combine(streamingTargetPath, "res");
                     Directory.CreateDirectory(destResFolder);
 
                     foreach (var file in Directory.GetFiles(resFolderPath, "*", SearchOption.AllDirectories))

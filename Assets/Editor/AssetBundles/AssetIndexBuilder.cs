@@ -83,7 +83,8 @@ namespace HFantasy.Editor.AssetBundles
             }
 
             string topLevelFolder = parts[0].ToLower(); // Из "tables"
-            string bundleName = $"res/{topLevelFolder}";
+            // string bundleName = $"Res/{topLevelFolder}";
+            string bundleName = $"{topLevelFolder}";
 
             //string assetName = Path.GetFileName(unityAssetPath).ToLower(); // Из "playerappearanceconfig.csv"
             string assetName = Path.GetFileNameWithoutExtension(unityAssetPath).ToLower(); // Из "playerappearanceconfig.csv"

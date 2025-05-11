@@ -14,7 +14,7 @@ namespace HFantasy.Script.Configs
         public void LoadPlayerAppearanceConfig()
         {
             //string path = PathConfig.PlayerAppearanceExportPath;
-            string bundleName = "res/tables";         // AB包名（对应打包规则）
+            string bundleName = "tables";         // AB包名（对应打包规则）
             string assetName = "playerappearanceconfig"; // AB资源名（小写、无路径）
             TextAsset csvAsset = ResourceLoader.LoadAsset<TextAsset>(bundleName, assetName);
             var itemList = CsvUtil.ParseCsvToList<AppearanceConfigItem>(csvAsset);

@@ -145,6 +145,7 @@ namespace HFantasy.Script.UI
             );
         }
     }
+    #if UNITY_EDITOR
     [CustomEditor(typeof(JumpDamageUI))]
     public class JumpDamageUIEditor : Editor
     {
@@ -162,4 +163,5 @@ namespace HFantasy.Script.UI
             }
         }
     }
+    #endif
 }

@@ -1,6 +1,6 @@
 using System;
 using System.IO;
-using static UnityEngine.Rendering.DebugUI;
+using UnityEngine;
 
 namespace HFantasy.Script.Configs
 {
@@ -15,6 +15,9 @@ namespace HFantasy.Script.Configs
         public const string PlayerAppearanceExportPath = ResRoot + "Tables/PlayerAppearanceConfig.csv";
 
         public const string PlayerSMLogicPath = ResRoot + "Tables/StateMachine/PlayerSMLogic.xml";
+
+        public const string SHADER_PATH = "Assets/Res/ArtRes/Shaders";
+
 
         public static string SaveFolder
         {

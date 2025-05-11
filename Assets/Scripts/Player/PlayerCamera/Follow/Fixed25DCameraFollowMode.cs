@@ -27,7 +27,7 @@ namespace HFantasy.Script.Player.PlayerCamera.Follow
         /// </summary>
         private void UpdateCameraPosition(Transform cam, Transform target, float dt)
         {
-            // 焦点位置：目标位置 + 偏移（如人物头顶）
+            //位置是目标位置 + 偏移
             Vector3 focusPoint = target.position + Vector3.up * GlobalCameraConfig.cameraFix25DHeightOffset;
             focusPoint += -Vector3.forward * GlobalCameraConfig.cameraFix25DDistanceOffset;
             cam.position = Vector3.SmoothDamp(cam.position, focusPoint, ref currentVelocity, GlobalCameraConfig.positionSmoothTime);

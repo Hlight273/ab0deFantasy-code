@@ -38,7 +38,7 @@ namespace HFantasy.Editor.Configs
                         Name = "Girl1_Body",
                         PartType = AppearancePartType.Body,
                         PartTypeId = 0,
-                        BundleName = "res/characters",
+                        BundleName = "characters",
                         AssetName = "girl1"
                     };
                     newList.Add(appearanceConfigItem);

@@ -5,13 +5,17 @@ namespace HFantasy.Script.Core.Resource {
     {
         private static IResourceLoader loader;
 
+        private static bool isEditorMode = false;
+
         static ResourceLoader()
         {
 #if UNITY_EDITOR
             loader = EditorResourceLoader.Instance;
 #else
-        loader = new AssetBundleManager.Instance;
+            loader = AssetBundleResourceLoader.Instance;
 #endif
+            if(!isEditorMode)
+                loader = AssetBundleResourceLoader.Instance;
         }
 
         public static T LoadAsset<T>(string pathOrBundle, string assetName) where T : UnityEngine.Object

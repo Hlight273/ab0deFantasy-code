@@ -6,16 +6,17 @@ namespace HFantasy.Editor.AssetBundles
 {
     public static class AssetBundleLabelTool
     {
-        private const string TargetRoot = "Assets/Res/Prefabs";//prefabs的资源目录
-        private const string AssetBundlePrefix = "res/"; //bundle前缀
+        private const string TargetRoot = "Assets/Res/Characters";//prefabs的资源目录
+        private const string AssetBundlePrefix = ""; //bundle前缀
+        private const string CharacterBundleName = "characters";
 
         private const string TableRoot = "Assets/Res/Tables";
-        private const string TableBundleName = "res/tables";
+        private const string TableBundleName = "tables";
 
         /// <summary>
         /// 找Assets/Prefabs中的所有prefab，然后找到其父级目录Prefabs目录的子目录名作为bundlename，其父级目录Prefabs目录的子目录的子目录名作为assetname
         /// </summary>
-        [MenuItem("资源工具/设置所有Prefab的AssetBundle标签")]
+        [MenuItem("资源工具/设置所有Characters的AssetBundle标签")]
         public static void SetPrefabAssetBundleLabels()
         {
             string[] prefabGuids = AssetDatabase.FindAssets("t:Prefab", new[] { TargetRoot });
@@ -33,14 +34,14 @@ namespace HFantasy.Editor.AssetBundles
                     continue;
                 }
 
-                string bundleName = AssetBundlePrefix + split[0].ToLower();
+                string bundleName = CharacterBundleName;//AssetBundlePrefix + split[0].ToLower();
                 string assetName = split[1].ToLower();
 
                 AssetImporter importer = AssetImporter.GetAtPath(path);
                 if (importer != null)
                 {
                     importer.assetBundleName = bundleName;
-                    importer.assetBundleVariant = assetName;
+                   // importer.assetBundleVariant = assetName;
                     count++;
                     Debug.Log($"? 设置：{path} -> BundleName: {bundleName}");
                 }
@@ -50,7 +51,7 @@ namespace HFantasy.Editor.AssetBundles
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
 
-            EditorUtility.DisplayDialog("设置完成", $"共设置 {count} 个 Prefab 的 AssetBundle 标签", "OK");
+            EditorUtility.DisplayDialog("设置完成", $"共设置 {count} 个 Characters 的 AssetBundle 标签", "OK");
         }
 
         [MenuItem("资源工具/设置所有CSV配置表的AssetBundle标签")]
@@ -68,7 +69,7 @@ namespace HFantasy.Editor.AssetBundles
                     importer.assetBundleName = TableBundleName;
                     importer.assetBundleVariant = null;
                     count++;
-                    Debug.Log($"✅ 设置表格：{assetPath} -> BundleName: {TableBundleName}");
+                    Debug.Log($"设置表格：{assetPath} -> BundleName: {TableBundleName}");
                 }
             }
 
