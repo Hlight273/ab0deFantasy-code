@@ -2,3 +2,7 @@
 	path = Assets/Res
 	url = https://github.com/Hlight273/ab0deFantasy-asset.git
 	ignore = all
+[submodule "Assets/Plugins/Mirror"]
+	path = Assets/Plugins/Mirror
+	url = https://github.com/MirrorNetworking/Mirror.git
+	ignore = all

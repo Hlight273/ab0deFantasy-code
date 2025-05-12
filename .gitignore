@@ -8,6 +8,9 @@ Assets/StreamingAssets/
 Assets/AssetBundles.meta
 Assets/Res.meta
 Assets/StreamingAssets.meta
+Assets/Plugins/Mirror.meta
+Assets/ScriptTemplates
+Assets/ScriptTemplates/
 
 ART/
 
@@ -26,3 +29,4 @@ ART/
 *.DS_Store
 
 .vs
+/MirrorExamplesPipelineConverted.txt
