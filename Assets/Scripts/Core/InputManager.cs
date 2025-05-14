@@ -26,6 +26,8 @@ namespace HFantasy.Script.Core
         private InputAction zoomAction;
 
         public event Action OnInteractPressed;//按F交互
+        private string interactableTargetInfo;
+        public string InteractableTargetInfo => interactableTargetInfo;//当前指向的可交互物体的信息
         private bool hasInteractableTarget;
         public bool HasInteractableTarget => hasInteractableTarget && !IsPointerOverUI();//当前是否指着可交互物体
 
@@ -34,6 +36,8 @@ namespace HFantasy.Script.Core
         private PlayerControls controls;
 
         private bool CanInput => !(EntityManager.Instance.MyPlayerEntity == null || EntityManager.Instance.MyPlayerEntity.RuntimeInfo.IsHitstun);
+
+        
 
         protected override void Awake()
         {
@@ -182,8 +186,9 @@ namespace HFantasy.Script.Core
 #endif
         }
 
-        public void SetInteractableTarget(bool hasTarget)
+        public void SetInteractableTarget(bool hasTarget, string targetInfo=null)
         {
+            interactableTargetInfo = targetInfo == null ? "" : targetInfo;
             hasInteractableTarget = hasTarget;
         }
 

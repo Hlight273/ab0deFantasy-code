@@ -1,4 +1,6 @@
 using HFantasy.Script.Core;
+using HFantasy.Script.Entity.Player;
+using HFantasy.Script.Player.Actions;
 using UnityEngine;
 
 namespace HFantasy.Script.Player.Interaction
@@ -26,9 +28,10 @@ namespace HFantasy.Script.Player.Interaction
             {
                 //Debug.LogWarning(hit.transform.gameObject.name);
                 //¸üÐÂ×´Ì¬
-                if (hit.collider.GetComponent<IInteractable>() != null)
+                IInteractable interactable = hit.collider.GetComponent<IInteractable>();
+                if (interactable != null)
                 {
-                    InputManager.Instance.SetInteractableTarget(true);
+                    InputManager.Instance.SetInteractableTarget(true, interactable.Description);
                 }
                 else
                 {
@@ -45,6 +48,8 @@ namespace HFantasy.Script.Player.Interaction
         {
             if (!InputManager.Instance.HasInteractableTarget) return;
 
+            PlayerEntity playerEntity = gameObject.GetComponent<PlayerActions>().PlayerEntity;
+
             Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
             RaycastHit hit;
 
@@ -53,7 +58,7 @@ namespace HFantasy.Script.Player.Interaction
                 IInteractable interactable = hit.collider.GetComponent<IInteractable>();
                 if (interactable != null)
                 {
-                    interactable.Interact();
+                    interactable.Interact(playerEntity);
                 }
             }
         }

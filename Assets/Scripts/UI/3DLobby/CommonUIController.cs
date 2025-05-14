@@ -1,5 +1,5 @@
 using HFantasy.Script.Core;
-
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -13,6 +13,7 @@ namespace HFantasy
         [Space(10)]
 
         [SerializeField] private Image InteractTips;
+        [SerializeField] private TextMeshProUGUI DescriptionText;
 
         private void Start()
         {
@@ -26,6 +27,7 @@ namespace HFantasy
                 if (InputManager.Instance.HasInteractableTarget)
                 {
                     InteractTips.gameObject.SetActive(true);
+                    DescriptionText.text = InputManager.Instance.InteractableTargetInfo;
                 }
                 else
                 {
