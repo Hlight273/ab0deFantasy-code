@@ -1,3 +1,4 @@
+using System.Linq;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
@@ -9,10 +10,9 @@ namespace HFantasy.Script.PostProcessing
         class ClawVignettePass : ScriptableRenderPass
         {
             private Material material;
-            private ClawVignette clawVignette;
             private RTHandle tempTexture;
 
-             public ClawVignettePass(Material material)
+            public ClawVignettePass(Material material)
             {
                 this.material = material;
                 renderPassEvent = RenderPassEvent.BeforeRenderingPostProcessing;
@@ -23,44 +23,31 @@ namespace HFantasy.Script.PostProcessing
             {
                 var descriptor = renderingData.cameraData.cameraTargetDescriptor;
                 descriptor.depthBufferBits = 0;
-
                 RenderingUtils.ReAllocateIfNeeded(ref tempTexture, descriptor, name: "_TempClawVignette");
             }
 
             public override void Execute(ScriptableRenderContext context, ref RenderingData renderingData)
-{
+            {
                 if (material == null || !renderingData.cameraData.postProcessEnabled)
                     return;
 
-                //检查当前场景是否有激活的Volume
-                var volumes = GameObject.FindObjectsOfType<Volume>();
-                if (volumes == null || volumes.Length == 0)
+                var camera = renderingData.cameraData.camera;
+                var currentScene = camera.gameObject.scene;
+
+                // 获取当前场景的Volume组件
+                var volume = camera.GetComponent<Volume>();
+                if (volume == null || !volume.isGlobal)
                 {
-                    return;
+                    volume = GameObject.FindObjectsOfType<Volume>()
+                        .FirstOrDefault(v => v.gameObject.scene == currentScene && v.gameObject.activeInHierarchy);
                 }
 
-                bool hasActiveVolume = false;
-                foreach (var volume in volumes)
-                {
-                    if (volume.isGlobal || volume.gameObject.activeInHierarchy)
-                    {
-                        hasActiveVolume = true;
-                        break;
-                    }
-                }
-
-                if (!hasActiveVolume)
-                {
+                if (volume == null || !volume.isActiveAndEnabled)
                     return;
-                }
 
-                var stack = VolumeManager.instance.stack;
-                clawVignette = stack.GetComponent<ClawVignette>();
-                
-                if (clawVignette == null || !clawVignette.IsActive())
-                {
+                var profile = volume.profile;
+                if (!profile.TryGet(out ClawVignette clawVignette) || !clawVignette.IsActive())
                     return;
-                }
 
                 var cmd = CommandBufferPool.Get("Claw Vignette Effect");
 
@@ -71,15 +58,9 @@ namespace HFantasy.Script.PostProcessing
                 material.SetFloat("_FlowStrength", clawVignette.flowStrength.value);
                 material.SetFloat("_CustomTime", Time.time);
 
-                material.SetTexture("_ClawTex", null);
-                if (clawVignette.clawTexture.value != null)
-                {
-                    material.SetTexture("_ClawTex", clawVignette.clawTexture.value);
-                }
+                material.SetTexture("_ClawTex", clawVignette.clawTexture.value);
 
                 var source = renderingData.cameraData.renderer.cameraColorTarget;
-                
-                //临时渲染纹理
                 Blit(cmd, source, tempTexture, material, 0);
                 Blit(cmd, tempTexture, source);
 
@@ -87,9 +68,7 @@ namespace HFantasy.Script.PostProcessing
                 CommandBufferPool.Release(cmd);
             }
 
-            public override void OnCameraCleanup(CommandBuffer cmd)
-            {
-            }
+            public override void OnCameraCleanup(CommandBuffer cmd) { }
 
             public void Dispose()
             {
@@ -115,9 +94,26 @@ namespace HFantasy.Script.PostProcessing
 
         public override void AddRenderPasses(ScriptableRenderer renderer, ref RenderingData renderingData)
         {
-            if (material != null)
+            if (material == null || !renderingData.cameraData.postProcessEnabled)
+                return;
+
+            var camera = renderingData.cameraData.camera;
+            var currentScene = camera.gameObject.scene;
+
+            // 检查当前场景是否有激活的包含ClawVignette的Volume
+            var volume = camera.GetComponent<Volume>();
+            if (volume == null || !volume.isGlobal)
             {
-                renderer.EnqueuePass(pass);
+                volume = GameObject.FindObjectsOfType<Volume>()
+                    .FirstOrDefault(v => v.gameObject.scene == currentScene && v.gameObject.activeInHierarchy);
+            }
+
+            if (volume != null && volume.isActiveAndEnabled && volume.profile != null)
+            {
+                if (volume.profile.TryGet(out ClawVignette clawEffect) && clawEffect.IsActive())
+                {
+                    renderer.EnqueuePass(pass);
+                }
             }
         }
 
