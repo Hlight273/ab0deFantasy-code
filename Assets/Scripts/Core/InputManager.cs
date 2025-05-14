@@ -6,7 +6,6 @@ using UnityEngine.InputSystem;
 
 namespace HFantasy.Script.Core
 {
-    [NonPersistentSingleton]
     public class InputManager : MonoSingleton<InputManager>
     {
         private bool isPointerOverUI;
@@ -67,9 +66,10 @@ namespace HFantasy.Script.Core
 
         private void Update()
         {
+            if (EventSystem.current == null) return;
 #if UNITY_ANDROID || UNITY_IOS
-        isPointerOverUI = CheckPointerOverUI();
-        HandleMobileLookAndZoom();
+            isPointerOverUI = CheckPointerOverUI();
+            HandleMobileLookAndZoom();
 #else
             isPointerOverUI = EventSystem.current.IsPointerOverGameObject();
             LookInput = lookAction.ReadValue<Vector2>();
@@ -167,22 +167,16 @@ namespace HFantasy.Script.Core
                 return touch1.position.x > Screen.width / 2f ? touch1 : touch0;
         }
 
-        private bool CheckPointerOverUI()
-        {
-            if (Input.touchCount > 0)
-            {
-                return EventSystem.current.IsPointerOverGameObject(Input.GetTouch(0).fingerId);
-            }
-            return false;
-        }
+
         private bool IsPointerOverUI(int touchId = -1)
         {
 #if UNITY_ANDROID || UNITY_IOS
-        if (touchId >= 0)
-        {
-            return EventSystem.current.IsPointerOverGameObject(touchId);
-        }
-        return isPointerOverUI;
+            if (EventSystem.current == null) return false;
+            if (touchId >= 0)
+            {
+                return EventSystem.current.IsPointerOverGameObject(touchId);
+            }
+            return isPointerOverUI;
 #else
             return isPointerOverUI;
 #endif
