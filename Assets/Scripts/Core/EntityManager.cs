@@ -23,7 +23,6 @@ namespace HFantasy.Script.Core
         private readonly Dictionary<int, PlayerEntity> playerDict = new Dictionary<int, PlayerEntity>();
 
 
-
         /// <summary>
         /// 创建一个新的玩家实体
         /// </summary>
@@ -65,7 +64,7 @@ namespace HFantasy.Script.Core
             {
                 myPlayerEntity = playerEntity;
             }
-
+            //Debug.Log($"PlayerDict Count after Add: {PlayerDict.Count}");
             return playerEntity;
         }
 
@@ -79,6 +78,7 @@ namespace HFantasy.Script.Core
 
         private void Update()
         {
+            //Debug.Log($"PlayerDict Count in Update: {PlayerDict.Count}");
             foreach (var player in PlayerDict.Values)
             {
                 player.Update();

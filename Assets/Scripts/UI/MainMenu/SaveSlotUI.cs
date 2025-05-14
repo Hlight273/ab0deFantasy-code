@@ -32,7 +32,7 @@ namespace HFantasy.Script.UI.MainMenu
                 playButton.onClick.RemoveAllListeners();
                 createNewSaveButton.onClick.RemoveAllListeners();
                 deleteButton.onClick.RemoveAllListeners();
-                playButton.onClick.AddListener(() => LoadGame(saveData));
+                playButton.onClick.AddListener(() => LoadGame(saveIndex, saveData));
                 deleteButton.onClick.AddListener(() => DeleteSave(saveIndex));
             }
             else
@@ -49,9 +49,11 @@ namespace HFantasy.Script.UI.MainMenu
             }
         }
 
-        private void LoadGame(SaveData saveData)
+        private void LoadGame(int saveIndex, SaveData saveData)
         {
+            SaveSystem.SelectSaveAndEnterGame(saveIndex, saveData);
             SceneController.Instance.SwitchScene(SceneConstant.ThreeDLobby);
+            
         }
 
         private void CreateSave(int saveIndex)

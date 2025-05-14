@@ -1,48 +1,68 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 namespace HFantasy.Script.Common
 {
+    [AttributeUsage(AttributeTargets.Class)]
+    public class NonPersistentSingletonAttribute : Attribute { }
+
     public class MonoSingleton<T> : MonoBehaviour where T : MonoBehaviour
     {
-        // 静态实例
-        private static T _instance;
+        //控制是否在场景切换时保持实例
+        protected static bool isPersistent = true;
+        static MonoSingleton()
+        {
+            //静态构造函数中检查特性，以后如果要非持久化单例，可以在类上加上 NonPersistentSingletonAttribute 特性。当然最好还是这些单例可以统一管理，不用都继承MonoSingleton，这样只有一个类需要维护
+            isPersistent = !typeof(T).IsDefined(typeof(NonPersistentSingletonAttribute), false);
+        }
 
-        // 实例的访问属性
+        private static T _instance;
         public static T Instance
         {
             get
             {
                 if (_instance == null)
                 {
-                    // 查找是否已有实例
                     _instance = FindObjectOfType<T>();
 
                     if (_instance == null)
                     {
-                        // 如果没有，则创建一个新的GameObject并挂载该实例
                         GameObject singleton = new GameObject(typeof(T).Name);
                         _instance = singleton.AddComponent<T>();
-                        DontDestroyOnLoad(singleton);  // 确保跨场景不销毁
+                        if (isPersistent)
+                        {
+                            DontDestroyOnLoad(singleton);
+                        }
                     }
                 }
                 return _instance;
             }
         }
 
-        // 确保只有一个实例
         protected virtual void Awake()
         {
+            Debug.Log($"[MonoSingleton] {typeof(T).Name} Awake called.");
             if (_instance != null && _instance != this)
             {
-                Destroy(gameObject);  // 如果已存在实例，则销毁当前实例
+                Destroy(gameObject);
+                Debug.LogWarning($"[MonoSingleton] {typeof(T).Name} 实例已存在，销毁新的实例。");
             }
             else
             {
                 _instance = this as T;
-                DontDestroyOnLoad(gameObject);  // 防止在场景切换时销毁
+                if (isPersistent)
+                {
+                    DontDestroyOnLoad(gameObject);
+                }
             }
+        }
+
+        //设置持久化的方法
+        protected static void SetPersistent(bool persistent)
+        {
+            isPersistent = persistent;
         }
     }
 }

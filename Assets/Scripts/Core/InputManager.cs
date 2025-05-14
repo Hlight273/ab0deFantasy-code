@@ -6,6 +6,7 @@ using UnityEngine.InputSystem;
 
 namespace HFantasy.Script.Core
 {
+    [NonPersistentSingleton]
     public class InputManager : MonoSingleton<InputManager>
     {
         private bool isPointerOverUI;
@@ -38,6 +39,7 @@ namespace HFantasy.Script.Core
         protected override void Awake()
         {
             base.Awake();
+            
             controls = new PlayerControls();
 
             lookAction = controls.Player.Look;

@@ -1,5 +1,6 @@
 using HFantasy.Script.Common;
 using HFantasy.Script.Common.Constant;
+using HFantasy.Script.Core;
 using System;
 using System.Collections;
 using UnityEngine;
@@ -14,6 +15,7 @@ public class SceneController : MonoSingleton<SceneController>
     
     public void SwitchScene(string targetSceneName)
     {
+        EntityManager.Instance.PlayerDict.Clear();
         StartCoroutine(SwitchSceneRoutine(targetSceneName));
     }
 

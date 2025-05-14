@@ -12,10 +12,9 @@ using UnityEngine;
 
 namespace HFantasy.Script.Core
 {
+    [NonPersistentSingleton]
     public class GameController : MonoSingleton<GameController>
     {
-
-
         void Start()
         {
             StartCoroutine(InitGame());
@@ -54,8 +53,8 @@ namespace HFantasy.Script.Core
             //初始化玩家信息
             ConfigResManager.Instance.LoadPlayerAppearanceConfig();
 
-            SaveSystem.CreateNewSave(0);
-            SaveData saveData = SaveSystem.Load(0);
+            //SaveSystem.CreateNewSave(0);
+            SaveData saveData = SaveSystem.CurrentSaveData;
             Transform spawnPoint = GameObject.Find("Room").transform.Find("SpawnPoint");
             Transform dummyPoint = GameObject.Find("Room").transform.Find("DummyPlayerPoint");
             Transform dummyPoint2 = GameObject.Find("Room").transform.Find("DummyPlayerPoint2");

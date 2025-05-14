@@ -1,5 +1,6 @@
 using HFantasy.Script.Core;
 using HFantasy.Script.Entity.Player;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -36,14 +37,23 @@ namespace HFantasy.Script.UI
             //lastUpdateTime = Time.time;
 
             //获取所有玩家并按照与摄像机的距离排序
-            var sortedPlayers = EntityManager.Instance.PlayerDict.Values
-                .OrderByDescending(p => Vector3.Distance(mainCamera.transform.position, p.PlayerObject.transform.position))
-                .ToList();
-
-            foreach (var player in sortedPlayers)
+            try
             {
-                UpdatePlayerLifeBar(player);
+                var sortedPlayers = EntityManager.Instance.PlayerDict.Values
+               .OrderByDescending(p => Vector3.Distance(mainCamera.transform.position, p.PlayerObject.transform.position))
+               .ToList();
+                foreach (var player in sortedPlayers)
+                {
+                    UpdatePlayerLifeBar(player);
+                }
             }
+            catch(Exception e)
+            {
+                Debug.LogError(e);
+            }
+           
+
+           
         }
 
         private void UpdatePlayerLifeBar(PlayerEntity player)

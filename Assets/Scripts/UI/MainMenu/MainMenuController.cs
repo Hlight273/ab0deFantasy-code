@@ -86,6 +86,7 @@ namespace HFantasy.Script.UI.MainMenu
 
         private void ShowSaveSlotSelection()
         {
+            saveSlotGroupAnimation.gameObject.SetActive(true);
             leftGroupAnimation.PlayExitAnimation();
             rightGroupAnimation.PlayExitAnimation();
             saveSlotGroupAnimation.PlayEnterAnimation(0.1f);
