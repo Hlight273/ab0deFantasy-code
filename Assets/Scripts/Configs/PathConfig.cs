@@ -26,11 +26,11 @@ namespace HFantasy.Script.Configs
                 string folder = "";
 
 #if UNITY_STANDALONE_WIN || UNITY_EDITOR_WIN
-                folder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "My Games", "F4ntasy");
+                folder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "My Games", "F4ntasy/");
 #elif UNITY_STANDALONE_OSX || UNITY_EDITOR_OSX
-        folder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Personal), "Library", "Application Support", "F4ntasy");
+        folder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Personal), "Library", "Application Support", "F4ntasy/");
 #elif UNITY_STANDALONE_LINUX || UNITY_EDITOR_LINUX
-        folder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Personal), ".config", "F4ntasy");
+        folder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Personal), ".config", "F4ntasy/");
 #else
         folder = Path.Combine(Application.persistentDataPath); // fallback
 #endif

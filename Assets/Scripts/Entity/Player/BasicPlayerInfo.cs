@@ -7,26 +7,26 @@ namespace HFantasy.Script.Entity.Player
     public class BasicPlayerInfo
     {
         public PlayerAppearanceData AppearanceData;
-        public int LV { get; set; }
-        public string Name { get;  set; }
-        public Vector3 Position { get;  set; }
-        public int MaxLife { get;  set; }
+        public int LV;
+        public string Name;
+        public Vector3 Position;
+        public int MaxLife;
 
-        public int Life { get;  set; }
+        public int Life;
 
-        public int MaxPower { get;  set; }
+        public int MaxPower;
 
-        public int Power { get;  set; }
+        public int Power;
 
         public bool IsDummy { get; set; }
 
-        public bool IsDead  { get; set; }//角色死亡动画之后设为true
+        public bool IsDead;//角色死亡动画之后设为true
 
-        public float PlayerHeight { get; set; }
+        public float PlayerHeight;
 
-        public float PlayerViewHeight { get; set; }//血条位置
+        public float PlayerViewHeight;//血条位置
 
-        public float PlayerDeadHeight { get; set; }
+        public float PlayerDeadHeight;
 
         public BasicPlayerInfo()
         {

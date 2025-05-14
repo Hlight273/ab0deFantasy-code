@@ -1,4 +1,5 @@
 using HFantasy.Script.Common;
+using HFantasy.Script.Common.Constant;
 using HFantasy.Script.Configs;
 using HFantasy.Script.Core.Resource;
 using HFantasy.Script.Core.Save;
@@ -53,19 +54,20 @@ namespace HFantasy.Script.Core
             //初始化玩家信息
             ConfigResManager.Instance.LoadPlayerAppearanceConfig();
 
-            SaveSystem.CreateNewSave("save1");
-            SaveData saveData = SaveSystem.Load("save1");
+            SaveSystem.CreateNewSave(0);
+            SaveData saveData = SaveSystem.Load(0);
             Transform spawnPoint = GameObject.Find("Room").transform.Find("SpawnPoint");
             Transform dummyPoint = GameObject.Find("Room").transform.Find("DummyPlayerPoint");
             Transform dummyPoint2 = GameObject.Find("Room").transform.Find("DummyPlayerPoint2");
             saveData.myPlayerInfo.Position = spawnPoint.position;
 
-            PlayerEntity myPlayer = EntityManager.Instance.CreatePlayerEntity(saveData.myPlayerInfo, true);
-            PlayerEntity testDummyPlayer = EntityManager.Instance.CreatePlayerEntity(PlayerInfoTemplate.BuildDefaultPlayerInfo(dummyPoint.position));
-            PlayerEntity testDummyPlayer2 = EntityManager.Instance.CreatePlayerEntity(PlayerInfoTemplate.BuildDefaultPlayerInfo(dummyPoint2.position));
+            PlayerEntity myPlayer = EntityManager.Instance.CreatePlayerEntity(saveData.myPlayerInfo, true, SceneConstant.ThreeDLobby);
+            PlayerEntity testDummyPlayer = EntityManager.Instance.CreatePlayerEntity(PlayerInfoTemplate.BuildDefaultPlayerInfo(dummyPoint.position),false, SceneConstant.ThreeDLobby);
+            PlayerEntity testDummyPlayer2 = EntityManager.Instance.CreatePlayerEntity(PlayerInfoTemplate.BuildDefaultPlayerInfo(dummyPoint2.position), false, SceneConstant.ThreeDLobby);
             testDummyPlayer2.Info.Life = 99999;
 
-            Camera.main.GetComponent<MainCameraController>().target = myPlayer.PlayerObject.transform;
+            MainCameraController mc = Camera.main.GetComponent<MainCameraController>();
+            mc.target = myPlayer.PlayerObject.transform;
             yield return null;
         }
 

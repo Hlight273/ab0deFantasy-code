@@ -8,6 +8,7 @@ namespace HFantasy.Script.Core
 {
     public class InputManager : MonoSingleton<InputManager>
     {
+        private bool isPointerOverUI;
         public Vector2 MoveInput { get; private set; }//移动输入值
         public bool JumpPressed { get; private set; }//是否跳跃
         public bool RunPressed { get; private set; }//是否奔跑
@@ -65,8 +66,10 @@ namespace HFantasy.Script.Core
         private void Update()
         {
 #if UNITY_ANDROID || UNITY_IOS
-            HandleMobileLookAndZoom();
+        isPointerOverUI = CheckPointerOverUI();
+        HandleMobileLookAndZoom();
 #else
+            isPointerOverUI = EventSystem.current.IsPointerOverGameObject();
             LookInput = lookAction.ReadValue<Vector2>();
             ZoomInput = zoomAction.ReadValue<float>();
 #endif
@@ -162,16 +165,24 @@ namespace HFantasy.Script.Core
                 return touch1.position.x > Screen.width / 2f ? touch1 : touch0;
         }
 
+        private bool CheckPointerOverUI()
+        {
+            if (Input.touchCount > 0)
+            {
+                return EventSystem.current.IsPointerOverGameObject(Input.GetTouch(0).fingerId);
+            }
+            return false;
+        }
         private bool IsPointerOverUI(int touchId = -1)
         {
 #if UNITY_ANDROID || UNITY_IOS
-            if (touchId >= 0)
-                return EventSystem.current.IsPointerOverGameObject(touchId);
-            if (Input.touchCount > 0)
-                return EventSystem.current.IsPointerOverGameObject(Input.GetTouch(0).fingerId);
-            return false;
+        if (touchId >= 0)
+        {
+            return EventSystem.current.IsPointerOverGameObject(touchId);
+        }
+        return isPointerOverUI;
 #else
-            return EventSystem.current.IsPointerOverGameObject();
+            return isPointerOverUI;
 #endif
         }
 

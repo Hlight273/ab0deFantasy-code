@@ -28,9 +28,31 @@ namespace HFantasy.Script.PostProcessing
             }
 
             public override void Execute(ScriptableRenderContext context, ref RenderingData renderingData)
-            {
-                if (material == null)
+{
+                if (material == null || !renderingData.cameraData.postProcessEnabled)
                     return;
+
+                //检查当前场景是否有激活的Volume
+                var volumes = GameObject.FindObjectsOfType<Volume>();
+                if (volumes == null || volumes.Length == 0)
+                {
+                    return;
+                }
+
+                bool hasActiveVolume = false;
+                foreach (var volume in volumes)
+                {
+                    if (volume.isGlobal || volume.gameObject.activeInHierarchy)
+                    {
+                        hasActiveVolume = true;
+                        break;
+                    }
+                }
+
+                if (!hasActiveVolume)
+                {
+                    return;
+                }
 
                 var stack = VolumeManager.instance.stack;
                 clawVignette = stack.GetComponent<ClawVignette>();
@@ -42,7 +64,7 @@ namespace HFantasy.Script.PostProcessing
 
                 var cmd = CommandBufferPool.Get("Claw Vignette Effect");
 
-                  material.SetColor("_ClawColor", clawVignette.clawColor.value);
+                material.SetColor("_ClawColor", clawVignette.clawColor.value);
                 material.SetFloat("_Intensity", clawVignette.intensity.value);
                 material.SetFloat("_Size", clawVignette.size.value);
                 material.SetVector("_FlowSpeed", clawVignette.flowSpeed.value);
@@ -56,9 +78,10 @@ namespace HFantasy.Script.PostProcessing
                 }
 
                 var source = renderingData.cameraData.renderer.cameraColorTarget;
-                var dest = renderingData.cameraData.renderer.cameraColorTarget;
-
-                Blit(cmd, source, dest, material, 0);
+                
+                //临时渲染纹理
+                Blit(cmd, source, tempTexture, material, 0);
+                Blit(cmd, tempTexture, source);
 
                 context.ExecuteCommandBuffer(cmd);
                 CommandBufferPool.Release(cmd);

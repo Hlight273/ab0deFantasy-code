@@ -9,6 +9,12 @@ namespace HFantasy.Script.Entity
     {
         public BasicPlayerInfo myPlayerInfo;
         public string lastSaveTime;
+
+        public SaveData()
+        {
+         
+        }
+
     }
 }
 

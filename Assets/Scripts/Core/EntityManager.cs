@@ -5,7 +5,9 @@ using HFantasy.Script.Configs;
 using HFantasy.Script.Core.Resource;
 using HFantasy.Script.Entity.Player;
 using System.Collections.Generic;
+using UnityEditor;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.UIElements;
 
 namespace HFantasy.Script.Core
@@ -25,7 +27,7 @@ namespace HFantasy.Script.Core
         /// <summary>
         /// 创建一个新的玩家实体
         /// </summary>
-        public PlayerEntity CreatePlayerEntity(BasicPlayerInfo playerInfo, bool isLocalPlayer = false)
+        public PlayerEntity CreatePlayerEntity(BasicPlayerInfo playerInfo, bool isLocalPlayer = false, string targetScene = null)
         {
             //string playerDataPath = EntityDataConfig.GetPlayerCareerCsvPath();
             //BasicPlayerInfo playerInfo = LoadPlayerSaveData(playerDataPath);
@@ -45,6 +47,11 @@ namespace HFantasy.Script.Core
 
             int entityId = EntityIdGenerator.GetNextId();
             GameObject playerGO = new GameObject($"Player_{playerInfo.Name}_{entityId}"); //这里额外创建一个玩家的父物体
+            if (targetScene != null) { 
+                SceneManager.MoveGameObjectToScene(playerGO, SceneManager.GetSceneByName(targetScene));//最好指定targetScene，防止后续逻辑出错
+            }
+
+
             playerGO.layer = LayerConstant.Player;
             playerGO.transform.position = playerInfo.Position;
             playerGO.transform.rotation = Quaternion.identity;
