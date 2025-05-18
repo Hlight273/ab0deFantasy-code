@@ -1,6 +1,8 @@
+#if UNITY_EDITOR
 using UnityEngine;
 using UnityEditor;
 using HFantasy.Script.UI.MainMenu.Animations;
+
 
 namespace HFantasy.Editor.UI
 {
@@ -10,7 +12,7 @@ namespace HFantasy.Editor.UI
         private void OnSceneGUI()
         {
             MoveTransUIAnimation animation = (MoveTransUIAnimation)target;
-            var configs = animation.GetType().GetField("buttonConfigs", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).GetValue(animation) as MoveTransUIAnimation.ButtonAnimationConfig[];
+            var configs = animation.GetType().GetField("sectionConfigs", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).GetValue(animation) as MoveTransUIAnimation.SectionAnimationConfig[];
             
             if (configs == null) return;
 
@@ -40,3 +42,4 @@ namespace HFantasy.Editor.UI
         }
     }
 }
+#endif

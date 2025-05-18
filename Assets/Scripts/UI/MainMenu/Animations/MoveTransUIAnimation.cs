@@ -4,16 +4,20 @@ using System.Collections;
 
 namespace HFantasy.Script.UI.MainMenu.Animations
 {
+    /// <summary>
+    /// 对外提供PlayEnterAnimation、PlayExitAnimation的UI动画类
+    /// 控制UI元素的移动动画，该类挂在在UI界面元素上，内部sectionConfigs中配置各个部分的移动方向
+    /// </summary>
     public class MoveTransUIAnimation : UIAnimationBase
     {
         [System.Serializable]
-        public class ButtonAnimationConfig
+        public class SectionAnimationConfig
         {
             public RectTransform rectTransform;
-            [Range(0, 360)] public float moveAngle = 0f; // 0度为向右，90度为向上
+            [Range(0, 360)] public float moveAngle = 0f; //0度为向右，90度为向上
         }
 
-        [SerializeField] private ButtonAnimationConfig[] buttonConfigs;
+        [SerializeField] private SectionAnimationConfig[] sectionConfigs;
         [SerializeField] private float moveDistance = 1000f;
         [SerializeField] private float animationDuration = 0.5f;
         [SerializeField] private AnimationCurve enterCurve = AnimationCurve.EaseInOut(0, 0, 1, 1);
@@ -25,51 +29,57 @@ namespace HFantasy.Script.UI.MainMenu.Animations
         protected override void Awake()
         {
             base.Awake();
-            originalPositions = new Vector2[buttonConfigs.Length];
-            currentAnimations = new Coroutine[buttonConfigs.Length];
+            originalPositions = new Vector2[sectionConfigs.Length];
+            currentAnimations = new Coroutine[sectionConfigs.Length];
 
-            for (int i = 0; i < buttonConfigs.Length; i++)
+            for (int i = 0; i < sectionConfigs.Length; i++)
             {
-                originalPositions[i] = buttonConfigs[i].rectTransform.anchoredPosition;
+                originalPositions[i] = sectionConfigs[i].rectTransform.anchoredPosition;
             }
         }
 
-        public override void PlayEnterAnimation(float delay = 0f)
+        public override void PlayEnterAnimation()
         {
             gameObject.SetActive(true);
-            for (int i = 0; i < buttonConfigs.Length; i++)
+            //设置初始位置
+            SetSectionsPosition(true);
+            StartAnimations(true);
+        }
+
+
+        public override void PlayExitAnimation()
+        {
+            StartAnimations(false);
+        }
+
+        private void StartAnimations(bool isEnter)
+        {
+            for (int i = 0; i < sectionConfigs.Length; i++)
             {
                 if (currentAnimations[i] != null)
                     StopCoroutine(currentAnimations[i]);
-                currentAnimations[i] = StartCoroutine(AnimatePosition(i, true, delay));
+                currentAnimations[i] = StartCoroutine(AnimatePosition(i, isEnter, isEnter ? enterDelay : exitDelay));
             }
         }
 
-        public override void PlayExitAnimation(float delay = 0f)
+        private void SetSectionsPosition(bool isEnter)
         {
-            for (int i = 0; i < buttonConfigs.Length; i++)
+            for (int i = 0; i < sectionConfigs.Length; i++)
             {
-                if (currentAnimations[i] != null)
-                    StopCoroutine(currentAnimations[i]);
-                currentAnimations[i] = StartCoroutine(AnimatePosition(i, false, delay));
+                Vector2 moveDirection = GetDirectionFromAngle(sectionConfigs[i].moveAngle);
+                Vector2 targetPos = isEnter ?
+                    originalPositions[i] + moveDirection * moveDistance :
+                    originalPositions[i];
+                sectionConfigs[i].rectTransform.anchoredPosition = targetPos;
             }
         }
-        private Vector2 GetDirectionFromAngle(float angle)
-        {
-            float radian = angle * Mathf.Deg2Rad;
-            return new Vector2(Mathf.Cos(radian), Mathf.Sin(radian));
-        }
+
         private IEnumerator AnimatePosition(int index, bool isEnter, float delay)
         {
             isAnimating = true;
-
-            if (delay > 0)
-                yield return new WaitForSeconds(delay);
-
-            var config = buttonConfigs[index];
-            float elapsed = 0;
+            yield return new WaitForSeconds(delay);
+            var config = sectionConfigs[index];
             Vector2 moveDirection = GetDirectionFromAngle(config.moveAngle);
-
             Vector2 startPos = isEnter ?
                 originalPositions[index] + moveDirection * moveDistance :
                 originalPositions[index];
@@ -77,33 +87,42 @@ namespace HFantasy.Script.UI.MainMenu.Animations
                 originalPositions[index] :
                 originalPositions[index] + moveDirection * moveDistance;
 
+            float elapsed = 0;
             while (elapsed < animationDuration)
             {
                 elapsed += Time.deltaTime;
                 float t = elapsed / animationDuration;
-                float curveValue = isEnter ? enterCurve.Evaluate(t) : exitCurve.Evaluate(t);
-                config.rectTransform.anchoredPosition = Vector2.Lerp(startPos, endPos, curveValue);
+                config.rectTransform.anchoredPosition = Vector2.Lerp(startPos, endPos,
+                    isEnter ? enterCurve.Evaluate(t) : exitCurve.Evaluate(t));
                 yield return null;
             }
 
             config.rectTransform.anchoredPosition = endPos;
             currentAnimations[index] = null;
 
-            // 检查是否所有动画都完成
-            bool allComplete = true;
+            if (IsAllAnimationsComplete())
+            {
+                OnAnimationComplete(isEnter);
+                if (!isEnter)
+                    gameObject.SetActive(false);
+            }
+        }
+
+        private bool IsAllAnimationsComplete()
+        {
             for (int i = 0; i < currentAnimations.Length; i++)
             {
                 if (currentAnimations[i] != null)
-                {
-                    allComplete = false;
-                    break;
-                }
+                    return false;
             }
-
-            if (allComplete)
-            {
-                OnAnimationComplete(isEnter);
-            }
+            return true;
         }
+        private Vector2 GetDirectionFromAngle(float angle)
+        {
+            float radian = angle * Mathf.Deg2Rad;
+            return new Vector2(Mathf.Cos(radian), Mathf.Sin(radian));
+        }
+
     }
+
 }

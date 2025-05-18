@@ -2,8 +2,10 @@ namespace HFantasy.Script.UI.Interfaces
 {
     public interface IUIAnimatable
     {
-        void PlayEnterAnimation(float delay = 0f);
-        void PlayExitAnimation(float delay = 0f);
+        float EnterDelay { get; }
+        float ExitDelay { get; }
+        void PlayEnterAnimation();
+        void PlayExitAnimation();
         bool IsAnimating { get; }
     }
 }
