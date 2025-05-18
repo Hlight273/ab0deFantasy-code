@@ -1,4 +1,6 @@
+using HFantasy.Script.Network.Core;
 using HFantasy.Script.UI.MainMenu.Animations;
+using HFantasy.Script.UI.MultiPlayer;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
@@ -11,15 +13,19 @@ namespace HFantasy.Script.UI.MainMenu
         [SerializeField] private Button singlePlayerButton;
         [SerializeField] private Button multiPlayerButton;
         [SerializeField] private Button settingsButton;
-        [SerializeField] private Button backMainButton;
+        [SerializeField] private Button[] backMainButtons;
 
-        [SerializeField] private SaveSlotUI[] saveGroup = new SaveSlotUI[3];
+        [SerializeField] private SaveSlotUI[] singleplayGroup = new SaveSlotUI[3];
 
         [Header("UI Animations")]
         [SerializeField] private MainMenuButtonGroupAnimation leftGroupAnimation;
         [SerializeField] private MainMenuButtonGroupAnimation rightGroupAnimation;
-        [SerializeField] private SaveSlotGroupAnimation saveSlotGroupAnimation;
-        
+        [SerializeField] private SaveSlotGroupAnimation singleplayGroupAnimation;
+        [SerializeField] private SaveSlotGroupAnimation mutiplayplayGroupAnimation;
+
+         [Header("多人游戏")]
+        [SerializeField] private GameObject multiPlayerControllerObject;
+        private MultiPlayerController multiPlayerController;
 
 
         private MainMenuModel model;
@@ -29,8 +35,13 @@ namespace HFantasy.Script.UI.MainMenu
             ValidateSaveGroup();
             model = new MainMenuModel();
             model.OnStateChanged += HandleStateChanged;
+            
+            if (multiPlayerControllerObject != null)
+            {
+                multiPlayerController = multiPlayerControllerObject.GetComponent<MultiPlayerController>();
+                //multiPlayerControllerObject.SetActive(false);
+            }
 
-            //按钮事件
             BindButtonEvents();
         }
 
@@ -39,7 +50,8 @@ namespace HFantasy.Script.UI.MainMenu
             singlePlayerButton.onClick.AddListener(OnSinglePlayerClicked);
             multiPlayerButton.onClick.AddListener(OnMultiPlayerClicked);
             settingsButton.onClick.AddListener(OnSettingsClicked);
-            backMainButton.onClick.AddListener(OnBackMainClicked);
+            foreach (var backMainButton in backMainButtons)
+                backMainButton.onClick.AddListener(OnBackMainClicked);
         }
 
         private void OnDestroy()
@@ -52,7 +64,7 @@ namespace HFantasy.Script.UI.MainMenu
 
         private void OnSinglePlayerClicked()
         {
-            model.LoadSaveSlots(saveGroup);
+            model.LoadSaveSlots(singleplayGroup);
             model.ChangeState(MainMenuState.SinglePlayer);
         }
 
@@ -71,12 +83,18 @@ namespace HFantasy.Script.UI.MainMenu
             model.ChangeState(MainMenuState.Main);
         }
 
-        private void HandleStateChanged(MainMenuState newState)
+         private void HandleStateChanged(MainMenuState newState)
         {
             switch (newState)
             {
                 case MainMenuState.SinglePlayer:
-                    ShowSaveSlotSelection();
+                    ShowSingleplaySelection();
+                    break;
+                case MainMenuState.MultiPlayer:
+                    ShowMutiplaySelection();
+                    break;
+                case MainMenuState.MultiPlayerSaveSelect:
+                    ShowMultiPlayerSaveSelection();
                     break;
                 case MainMenuState.Main:
                     ShowMainMenu();
@@ -84,28 +102,64 @@ namespace HFantasy.Script.UI.MainMenu
             }
         }
 
-        private void ShowSaveSlotSelection()
+        private void ShowSingleplaySelection()
         {
-            saveSlotGroupAnimation.gameObject.SetActive(true);
+            singleplayGroupAnimation.gameObject.SetActive(true);
             leftGroupAnimation.PlayExitAnimation();
             rightGroupAnimation.PlayExitAnimation();
-            saveSlotGroupAnimation.PlayEnterAnimation(0.1f);
+            singleplayGroupAnimation.PlayEnterAnimation(0.1f);
+
+        }
+
+        private void ShowMutiplaySelection()
+        {
+            mutiplayplayGroupAnimation.gameObject.SetActive(true);
+            leftGroupAnimation.PlayExitAnimation();
+            rightGroupAnimation.PlayExitAnimation();
+            mutiplayplayGroupAnimation.PlayEnterAnimation(0.1f);
+        }
+
+
+
+        public void ShowMultiPlayerSaveSelection()
+        {
+            singleplayGroupAnimation.gameObject.SetActive(true);
+            mutiplayplayGroupAnimation.gameObject.SetActive(false);
+            multiPlayerControllerObject.SetActive(true);
+            leftGroupAnimation.PlayExitAnimation();
+            rightGroupAnimation.PlayExitAnimation();
+            singleplayGroupAnimation.PlayEnterAnimation(0.1f);
         }
 
         private void ShowMainMenu()
         {
-            leftGroupAnimation.PlayEnterAnimation();
+             leftGroupAnimation.PlayEnterAnimation();
             rightGroupAnimation.PlayEnterAnimation();
-            saveSlotGroupAnimation.PlayExitAnimation();
+            if (singleplayGroupAnimation.gameObject.activeSelf)
+                singleplayGroupAnimation.PlayExitAnimation();
+            if (mutiplayplayGroupAnimation.gameObject.activeSelf)
+            {
+                mutiplayplayGroupAnimation.PlayExitAnimation();
+                //返回主菜单时断开网络连接
+                if (NetworkManager.Instance != null)
+                {
+                    NetworkManager.Instance.Disconnect();
+                }
+                ////隐藏多人游戏控制器
+                //if (multiPlayerControllerObject != null)
+                //{
+                //    multiPlayerControllerObject.SetActive(false);
+                //}
+            }
         }
 
 
 
         private void ValidateSaveGroup()
         {
-            for (int i = 0; i < saveGroup.Length; i++)
+            for (int i = 0; i < singleplayGroup.Length; i++)
             {
-                if (saveGroup[i] == null)
+                if (singleplayGroup[i] == null)
                 {
                     Debug.LogError($"[MainMenuController] SaveGroup 槽位 {i} 未设置 SaveSlotUI 实例！请在 Inspector 中设置所有存档槽位。");
 #if UNITY_EDITOR

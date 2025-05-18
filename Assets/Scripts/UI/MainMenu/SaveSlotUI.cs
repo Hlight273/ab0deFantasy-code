@@ -5,6 +5,7 @@ using HFantasy.Script.Core.Save;
 using HFantasy.Script.Entity;
 using HFantasy.Script.Core;
 using HFantasy.Script.Common.Constant;
+using HFantasy.Script.UI.MultiPlayer;
 
 namespace HFantasy.Script.UI.MainMenu
 {
@@ -19,9 +20,12 @@ namespace HFantasy.Script.UI.MainMenu
         [SerializeField] private TextMeshProUGUI lastSaveTimeText;
         [SerializeField] private Button playButton;
         [SerializeField] private Button deleteButton;
+
+        private bool isMultiPlayerMode;
         
-        public void SetData(int saveIndex, SaveData saveData)
+        public void SetData(int saveIndex, SaveData saveData, bool isMultiPlayer = false)
         {
+            isMultiPlayerMode = isMultiPlayer;
             if (saveData != null)
             {
                 NoSave.SetActive(false);
@@ -52,8 +56,21 @@ namespace HFantasy.Script.UI.MainMenu
         private void LoadGame(int saveIndex, SaveData saveData)
         {
             SaveSystem.SelectSaveAndEnterGame(saveIndex, saveData);
-            SceneController.Instance.SwitchScene(SceneConstant.ThreeDLobby);
-            
+            if (isMultiPlayerMode)
+            {
+                // 多人模式下，选择存档后返回多人游戏界面，并通知 MultiPlayerController
+                transform.parent.gameObject.SetActive(false);
+                var multiPlayerController = FindObjectOfType<MultiPlayerController>();
+                if (multiPlayerController != null)
+                {
+                    //multiPlayerController.OnSaveSelected();
+                }
+            }
+            else
+            {
+                // 单人模式下直接进入游戏
+                SceneController.Instance.SwitchScene(SceneConstant.ThreeDLobby);
+            }
         }
 
         private void CreateSave(int saveIndex)
