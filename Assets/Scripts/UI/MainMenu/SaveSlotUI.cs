@@ -54,24 +54,19 @@ namespace HFantasy.Script.UI.MainMenu
         }
 
         private void LoadGame(int saveIndex, SaveData saveData)
-        {
-            SaveSystem.SelectSaveAndEnterGame(saveIndex, saveData);
-            if (isMultiPlayerMode)
-            {
-                // 多人模式下，选择存档后返回多人游戏界面，并通知 MultiPlayerController
-                transform.parent.gameObject.SetActive(false);
-                var multiPlayerController = FindObjectOfType<MultiPlayerController>();
-                if (multiPlayerController != null)
-                {
-                    //multiPlayerController.OnSaveSelected();
-                }
-            }
-            else
-            {
-                // 单人模式下直接进入游戏
-                SceneController.Instance.SwitchScene(SceneConstant.ThreeDLobby);
-            }
-        }
+{
+    SaveSystem.SelectSaveAndEnterGame(saveIndex, saveData);
+    if (isMultiPlayerMode)
+    {
+        // 多人模式下直接进入游戏场景
+        SceneController.Instance.SwitchScene(SceneConstant.ThreeDLobby);
+    }
+    else
+    {
+        // 单人模式下直接进入游戏
+        SceneController.Instance.SwitchScene(SceneConstant.ThreeDLobby);
+    }
+}
 
         private void CreateSave(int saveIndex)
         {

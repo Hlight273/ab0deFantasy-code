@@ -5,6 +5,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using System.Collections.Generic;
 using TMPro;
+using HFantasy.Script.UI.MainMenu;
 
 namespace HFantasy.Script.UI.MultiPlayer
 {
@@ -23,9 +24,9 @@ namespace HFantasy.Script.UI.MultiPlayer
 
         private void Start()
         {
-           
 
-           
+
+
         }
 
         private void OnEnable()
@@ -40,6 +41,7 @@ namespace HFantasy.Script.UI.MultiPlayer
             RoomManager.Instance.OnRoomListUpdated += OnRoomListUpdated;
             RoomManager.Instance.OnJoinedRoom += OnJoinedRoom;
         }
+
         private void OnDisable()
         {
             StopAllCoroutines();
@@ -55,12 +57,14 @@ namespace HFantasy.Script.UI.MultiPlayer
             {
                 Destroy(child.gameObject);
             }
+            selectedRoom = null;
+            createRoomButton.interactable = true;
         }
-        
+
 
         private void OnDestroy()
         {
-           
+            OnDisable();
         }
 
         private void Update()
@@ -79,6 +83,7 @@ namespace HFantasy.Script.UI.MultiPlayer
             NetworkManager.Instance.StartHost(7777);
             string roomName = "Room" + UnityEngine.Random.Range(1000, 9999);
             RoomManager.Instance.CreateRoom(roomName, 4);
+            MainMenuUIManager.Instance.MainMenuModel.PushState(MainMenuState.MultiPlayerSaveSelect);
         }
 
         private void OnJoinRoomButtonClicked()
@@ -104,31 +109,32 @@ namespace HFantasy.Script.UI.MultiPlayer
         private void OnJoinedRoom(RoomInfo room)
         {
             // 处理加入房间后的UI逻辑
+            MainMenuUIManager.Instance.MainMenuModel.PushState(MainMenuState.MultiPlayerSaveSelect);
         }
 
         private void UpdateRoomList(List<RoomInfo> rooms)
         {
             // 清理现有列表
-    foreach (Transform child in roomListContent)
-    {
-        Destroy(child.gameObject);
-    }
+            foreach (Transform child in roomListContent)
+            {
+                Destroy(child.gameObject);
+            }
 
-    // 创建新的房间项
-    foreach (var room in rooms)
-    {
-        GameObject roomItem = Instantiate(roomItemPrefab, roomListContent);
-        RoomItemUI roomItemUI = roomItem.GetComponent<RoomItemUI>();
-        roomItemUI.SetRoomInfo(room);
-        roomItemUI.OnRoomSelected += OnRoomSelected;
-    }
+            // 创建新的房间项
+            foreach (var room in rooms)
+            {
+                GameObject roomItem = Instantiate(roomItemPrefab, roomListContent);
+                RoomItemUI roomItemUI = roomItem.GetComponent<RoomItemUI>();
+                roomItemUI.SetRoomInfo(room);
+                roomItemUI.OnRoomSelected += OnRoomSelected;
+            }
         }
 
         private void OnRoomSelected(RoomInfo room)
-{
-    selectedRoom = room;
-    joinRoomButton.interactable = true;
-}
+        {
+            selectedRoom = room;
+            joinRoomButton.interactable = true;
+        }
     }
-    
+
 }
