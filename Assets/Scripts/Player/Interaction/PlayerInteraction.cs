@@ -12,6 +12,11 @@ namespace HFantasy.Script.Player.Interaction
 
         private void OnEnable()
         {
+            if (Camera.main == null)
+            {
+                enabled = false;
+                return;
+            }
             InputManager.Instance.OnInteractPressed += TryInteract;
         }
         private void OnDisable()

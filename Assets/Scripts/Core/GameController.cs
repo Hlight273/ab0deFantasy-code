@@ -1,3 +1,4 @@
+using HFantasy.Script.Clinet;
 using HFantasy.Script.Common;
 using HFantasy.Script.Common.Constant;
 using HFantasy.Script.Configs;
@@ -8,6 +9,7 @@ using HFantasy.Script.Entity.Player;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Security.Cryptography;
 using UnityEngine;
 
 namespace HFantasy.Script.Core
@@ -49,21 +51,31 @@ namespace HFantasy.Script.Core
             }
             Debug.Log("xxx:" + ABInitializer.IsInitialized);
 #endif
+           
 
-            //初始化玩家信息
-            ConfigResManager.Instance.LoadPlayerAppearanceConfig();
+            if (MainContext.Instance.RoomContext.isHost)
+            {
+                Transform dummyPoint = GameObject.Find("Room").transform.Find("DummyPlayerPoint");
+                Transform dummyPoint2 = GameObject.Find("Room").transform.Find("DummyPlayerPoint2");
+               
+                PlayerEntity testDummyPlayer = EntityManager.Instance.CreatePlayerEntity(PlayerInfoTemplate.BuildDefaultPlayerInfo(dummyPoint.position), false, SceneConstant.ThreeDLobby);
+                PlayerEntity testDummyPlayer2 = EntityManager.Instance.CreatePlayerEntity(PlayerInfoTemplate.BuildDefaultPlayerInfo(dummyPoint2.position), false, SceneConstant.ThreeDLobby);
+                testDummyPlayer2.Info.Life = 99999;
+            }
+            else
+            {
+                EntityManager.Instance.CreateRemotePlayers(MainContext.Instance.RemoteInitPlayerInfos);
+            }
 
-            //SaveSystem.CreateNewSave(0);
-            SaveData saveData = SaveSystem.CurrentSaveData;
+
+                //SaveSystem.CreateNewSave(0);
+                SaveData saveData = SaveSystem.CurrentSaveData;
             Transform spawnPoint = GameObject.Find("Room").transform.Find("SpawnPoint");
-            Transform dummyPoint = GameObject.Find("Room").transform.Find("DummyPlayerPoint");
-            Transform dummyPoint2 = GameObject.Find("Room").transform.Find("DummyPlayerPoint2");
+            MainContext.Instance.DefaultSpawnPosition = spawnPoint.position;
+          
             saveData.myPlayerInfo.Position = spawnPoint.position;
-
             PlayerEntity myPlayer = EntityManager.Instance.CreatePlayerEntity(saveData.myPlayerInfo, true, SceneConstant.ThreeDLobby);
-            PlayerEntity testDummyPlayer = EntityManager.Instance.CreatePlayerEntity(PlayerInfoTemplate.BuildDefaultPlayerInfo(dummyPoint.position),false, SceneConstant.ThreeDLobby);
-            PlayerEntity testDummyPlayer2 = EntityManager.Instance.CreatePlayerEntity(PlayerInfoTemplate.BuildDefaultPlayerInfo(dummyPoint2.position), false, SceneConstant.ThreeDLobby);
-            testDummyPlayer2.Info.Life = 99999;
+
 
             MainCameraController mc = Camera.main.GetComponent<MainCameraController>();
             mc.target = myPlayer.PlayerObject.transform;

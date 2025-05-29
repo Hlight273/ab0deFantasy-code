@@ -83,8 +83,8 @@ namespace HFantasy.Script.Player.Actions.Combat
                 if (damageable != null && !damageable.Info.IsDead)
                 {
                     var damageInfo = new DamageInfo.Builder(
-                        playerEntity.Id,
-                        damageable.Id,
+                        playerEntity.Cid,
+                        damageable.Cid,
                         playerEntity.RuntimeInfo.BattleInfo.PhysicDamage//需要检查角色攻击力属性，关于物理和魔法 以后再扩展
                     )
                     .WithHitInfo(

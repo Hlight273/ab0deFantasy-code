@@ -1,4 +1,3 @@
-using HFantasy.Script.Network;
 using HFantasy.Script.Network.Protocol;
 using System;
 using TMPro;
@@ -11,31 +10,43 @@ namespace HFantasy.Script.UI.MultiPlayer
     {
         [SerializeField] private TextMeshProUGUI roomNameText;
         [SerializeField] private TextMeshProUGUI playerCountText;
-        [SerializeField] private Image backgroundImage;
-        [SerializeField] private Color normalColor = Color.white;
-        [SerializeField] private Color selectedColor = Color.cyan;
+        [SerializeField] private Button selectButton;
 
         private RoomInfo roomInfo;
-        public RoomInfo RoomInfo => roomInfo;
+
+        public RoomInfo RoomInfo { get => roomInfo; set => roomInfo = value; }
 
         public event Action<RoomInfo> OnRoomSelected;
 
         private void Awake()
         {
-            GetComponent<Button>().onClick.AddListener(() => OnRoomSelected?.Invoke(roomInfo));
-            backgroundImage.color = normalColor;
+            selectButton.onClick.AddListener(OnSelectButtonClicked);
         }
+        private void OnDestroy()
+        {
+            selectButton.onClick.RemoveListener(OnSelectButtonClicked);
+        }
+        private void OnSelectButtonClicked()
+        {
+            if (RoomInfo == null) return;
+            OnRoomSelected?.Invoke(RoomInfo);
+        }
+
 
         public void SetRoomInfo(RoomInfo info)
         {
-            roomInfo = info;
-            roomNameText.text = info.Name;
-            playerCountText.text = $"{info.CurrentPlayers}/{info.MaxPlayers}";
+            RoomInfo = info;
+            UpdateUI();
         }
 
-        public void SetSelected(bool selected)
+        private void UpdateUI()
         {
-            backgroundImage.color = selected ? selectedColor : normalColor;
+            if (RoomInfo == null) return;
+
+            roomNameText.text = RoomInfo.name;
+            playerCountText.text = $"{RoomInfo.curPlayerCount}/{RoomInfo.maxPlayerCount}";
+            selectButton.interactable = RoomInfo.curPlayerCount < RoomInfo.maxPlayerCount;
         }
+
     }
 }

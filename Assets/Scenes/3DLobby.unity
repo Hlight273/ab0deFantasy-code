@@ -1453,7 +1453,6 @@ GameObject:
   m_Component:
   - component: {fileID: 330585546}
   - component: {fileID: 330585545}
-  - component: {fileID: 330585544}
   - component: {fileID: 330585547}
   - component: {fileID: 330585548}
   m_Layer: 0
@@ -1463,14 +1462,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!81 &330585544
-AudioListener:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 330585543}
-  m_Enabled: 1
 --- !u!20 &330585545
 Camera:
   m_ObjectHideFlags: 0
@@ -7874,8 +7865,8 @@ MonoBehaviour:
   openRotationAngle: -90
   duration: 1
   easeType: 30
---- !u!64 &1505498910
-MeshCollider:
+--- !u!65 &1505498910
+BoxCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -7889,13 +7880,12 @@ MeshCollider:
     serializedVersion: 2
     m_Bits: 0
   m_LayerOverridePriority: 0
-  m_IsTrigger: 0
+  m_IsTrigger: 1
   m_ProvidesContacts: 0
   m_Enabled: 1
-  serializedVersion: 5
-  m_Convex: 0
-  m_CookingOptions: 30
-  m_Mesh: {fileID: 2619086233303812490, guid: eb1ea10424b1fd54a911d11e956ea492, type: 3}
+  serializedVersion: 3
+  m_Size: {x: 1.0191488, y: 2.0852754, z: 0.17573023}
+  m_Center: {x: 0.43547302, y: 1.0330421, z: -0.058826342}
 --- !u!1 &1509404840 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 8611811550607913537, guid: b2b1040f29fd5ed4bb531ba5954b983f,
@@ -9556,8 +9546,8 @@ MonoBehaviour:
   openRotationAngle: -90
   duration: 1
   easeType: 30
---- !u!64 &1785704581
-MeshCollider:
+--- !u!65 &1785704581
+BoxCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -9571,13 +9561,12 @@ MeshCollider:
     serializedVersion: 2
     m_Bits: 0
   m_LayerOverridePriority: 0
-  m_IsTrigger: 0
+  m_IsTrigger: 1
   m_ProvidesContacts: 0
   m_Enabled: 1
-  serializedVersion: 5
-  m_Convex: 0
-  m_CookingOptions: 30
-  m_Mesh: {fileID: 2619086233303812490, guid: eb1ea10424b1fd54a911d11e956ea492, type: 3}
+  serializedVersion: 3
+  m_Size: {x: 0.9167834, y: 2.1426864, z: 0.13702725}
+  m_Center: {x: 0.447715, y: 1.0747168, z: -0.020924695}
 --- !u!1 &1801103581
 GameObject:
   m_ObjectHideFlags: 0

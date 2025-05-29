@@ -26,7 +26,7 @@ namespace HFantasy.Script.UI
             if (lifeBarContainer == null)
                 lifeBarContainer = transform;
 
-            mainCamera = Camera.main;
+            
             canvas = GetComponentInParent<Canvas>();
         }
 
@@ -35,7 +35,8 @@ namespace HFantasy.Script.UI
             // 限制更新频率
             //if (Time.time - lastUpdateTime < updateInterval) return;
             //lastUpdateTime = Time.time;
-
+            mainCamera = Camera.main;
+            if (mainCamera == null) return;
             //获取所有玩家并按照与摄像机的距离排序
             try
             {
@@ -58,19 +59,19 @@ namespace HFantasy.Script.UI
 
         private void UpdatePlayerLifeBar(PlayerEntity player)
         {
-            if (!lifeBarDict.TryGetValue(player.Id, out Slider lifeBarSlider))
+            if (!lifeBarDict.TryGetValue(player.Cid, out Slider lifeBarSlider))
             {
                 GameObject lifeBarGO = Instantiate(lifeBarPrefab, lifeBarContainer);
                 lifeBarSlider = lifeBarGO.GetComponent<Slider>();
-                lifeBarDict.Add(player.Id, lifeBarSlider);
-                targetValues.Add(player.Id, player.Info.Life);
+                lifeBarDict.Add(player.Cid, lifeBarSlider);
+                targetValues.Add(player.Cid, player.Info.Life);
             }
             //更新血条的值
             if (lifeBarSlider.maxValue != player.Info.MaxLife)
                 lifeBarSlider.maxValue = player.Info.MaxLife;
             float currentTarget = player.Info.Life;
-            targetValues[player.Id] = currentTarget;
-            float smoothedValue = Mathf.Lerp(lifeBarSlider.value, targetValues[player.Id], Time.deltaTime * smoothSpeed);//平滑过渡
+            targetValues[player.Cid] = currentTarget;
+            float smoothedValue = Mathf.Lerp(lifeBarSlider.value, targetValues[player.Cid], Time.deltaTime * smoothSpeed);//平滑过渡
             lifeBarSlider.value = smoothedValue;
 
             //更新位置（考虑Canvas缩放）

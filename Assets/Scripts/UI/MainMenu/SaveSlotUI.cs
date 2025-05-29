@@ -21,11 +21,10 @@ namespace HFantasy.Script.UI.MainMenu
         [SerializeField] private Button playButton;
         [SerializeField] private Button deleteButton;
 
-        private bool isMultiPlayerMode;
-        
-        public void SetData(int saveIndex, SaveData saveData, bool isMultiPlayer = false)
+        private bool isMultiPlayerMode => MainMenuUIManager.Instance.MainMenuModel.CurrentState== MainMenuState.MultiPlayerSaveSelect;
+
+        public void SetData(int saveIndex, SaveData saveData)
         {
-            isMultiPlayerMode = isMultiPlayer;
             if (saveData != null)
             {
                 NoSave.SetActive(false);
@@ -54,24 +53,25 @@ namespace HFantasy.Script.UI.MainMenu
         }
 
         private void LoadGame(int saveIndex, SaveData saveData)
-{
-    SaveSystem.SelectSaveAndEnterGame(saveIndex, saveData);
-    if (isMultiPlayerMode)
-    {
-        // 多人模式下直接进入游戏场景
-        SceneController.Instance.SwitchScene(SceneConstant.ThreeDLobby);
-    }
-    else
-    {
-        // 单人模式下直接进入游戏
-        SceneController.Instance.SwitchScene(SceneConstant.ThreeDLobby);
-    }
-}
+        {
+            SaveSystem.SelectSaveAndEnterGame(saveIndex, saveData);
+            if (isMultiPlayerMode)
+            {
+                // 多人模式
+                //SceneController.Instance.SwitchScene(SceneConstant.ThreeDLobby);
+                MainMenuUIManager.Instance.MultiplayerUIController.OnSaveSelect?.Invoke(saveData);
+            }
+            else
+            {
+                // 单人模式下直接进入游戏
+                SceneController.Instance.SwitchScene(SceneConstant.ThreeDLobby);
+            }
+        }
 
         private void CreateSave(int saveIndex)
         {
             SaveData newSaveData = SaveSystem.CreateNewSave(saveIndex);
-            if (newSaveData!=null)
+            if (newSaveData != null)
             {
                 SetData(saveIndex, newSaveData);
             }

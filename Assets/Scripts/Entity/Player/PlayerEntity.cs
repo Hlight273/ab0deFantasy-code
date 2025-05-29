@@ -21,12 +21,13 @@ namespace HFantasy.Script.Entity.Player
 
         public bool isLocalPlayer { get; private set; }
 
-        public PlayerEntity(int id, BasicPlayerInfo info, GameObject gameObject, bool isLocalPlayer)
+        public PlayerEntity(int id, BasicPlayerInfo info, GameObject gameObject, bool isLocalPlayer, int netId=-1)
         {
             GameObject = gameObject;
             Info = info;
             RuntimeInfo = new PlayerRuntimeInfo(info.LV);
-            Id = id;
+            Cid = id;
+            NetId = netId;
             PlayerObject = gameObject.transform.GetChild(0).gameObject;
             this.isLocalPlayer = isLocalPlayer;
             actions = PlayerObject.GetComponent<PlayerActions>();

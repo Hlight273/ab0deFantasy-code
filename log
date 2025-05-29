@@ -1,0 +1,1412 @@
+#region 程序集 LiteNetLib, Version=1.3.1.0, Culture=neutral, PublicKeyToken=null
+// E:\Code\unity\ab0deFantasy\Assets\Plugins\LiteNetLib\LiteNetLib.dll
+// Decompiled with ICSharpCode.Decompiler 8.1.1.7464
+#endregion
+
+using System;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Net;
+using System.Net.Sockets;
+using System.Runtime.CompilerServices;
+using System.Threading;
+using LiteNetLib.Utils;
+
+namespace LiteNetLib;
+
+//
+// 摘要:
+//     Network peer. Main purpose is sending messages to specific peer.
+public class NetPeer : IPEndPoint
+{
+    private class IncomingFragments
+    {
+        public NetPacket[] Fragments;
+
+        public int ReceivedCount;
+
+        public int TotalSize;
+
+        public byte ChannelId;
+    }
+
+    private int _rtt;
+
+    private int _avgRtt;
+
+    private int _rttCount;
+
+    private double _resendDelay = 27.0;
+
+    private float _pingSendTimer;
+
+    private float _rttResetTimer;
+
+    private readonly Stopwatch _pingTimer = new Stopwatch();
+
+    private volatile float _timeSinceLastPacket;
+
+    private long _remoteDelta;
+
+    private readonly object _shutdownLock = new object();
+
+    internal volatile NetPeer NextPeer;
+
+    internal NetPeer PrevPeer;
+
+    private NetPacket[] _unreliableSecondQueue;
+
+    private NetPacket[] _unreliableChannel;
+
+    private int _unreliablePendingCount;
+
+    private readonly object _unreliableChannelLock = new object();
+
+    private readonly ConcurrentQueue<BaseChannel> _channelSendQueue;
+
+    private readonly BaseChannel[] _channels;
+
+    private int _mtu;
+
+    private int _mtuIdx;
+
+    private bool _finishMtu;
+
+    private float _mtuCheckTimer;
+
+    private int _mtuCheckAttempts;
+
+    private const int MtuCheckDelay = 1000;
+
+    private const int MaxMtuCheckAttempts = 4;
+
+    private readonly object _mtuMutex = new object();
+
+    private int _fragmentId;
+
+    private readonly Dictionary<ushort, IncomingFragments> _holdedFragments;
+
+    private readonly Dictionary<ushort, ushort> _deliveredFragments;
+
+    private readonly NetPacket _mergeData;
+
+    private int _mergePos;
+
+    private int _mergeCount;
+
+    private int _connectAttempts;
+
+    private float _connectTimer;
+
+    private long _connectTime;
+
+    private byte _connectNum;
+
+    private ConnectionState _connectionState;
+
+    private NetPacket _shutdownPacket;
+
+    private const int ShutdownDelay = 300;
+
+    private float _shutdownTimer;
+
+    private readonly NetPacket _pingPacket;
+
+    private readonly NetPacket _pongPacket;
+
+    private readonly NetPacket _connectRequestPacket;
+
+    private readonly NetPacket _connectAcceptPacket;
+
+    //
+    // 摘要:
+    //     Peer parent NetManager
+    public readonly NetManager NetManager;
+
+    //
+    // 摘要:
+    //     Peer id can be used as key in your dictionary of peers
+    public readonly int Id;
+
+    //
+    // 摘要:
+    //     Application defined object containing data about the connection
+    public object Tag;
+
+    //
+    // 摘要:
+    //     Statistics of peer connection
+    public readonly NetStatistics Statistics;
+
+    private SocketAddress _cachedSocketAddr;
+
+    private int _cachedHashCode;
+
+    internal byte[] NativeAddress;
+
+    internal byte ConnectionNum
+    {
+        get
+        {
+            return _connectNum;
+        }
+        private set
+        {
+            _connectNum = value;
+            _mergeData.ConnectionNumber = value;
+            _pingPacket.ConnectionNumber = value;
+            _pongPacket.ConnectionNumber = value;
+        }
+    }
+
+    //
+    // 摘要:
+    //     Current connection state
+    public ConnectionState ConnectionState => _connectionState;
+
+    //
+    // 摘要:
+    //     Connection time for internal purposes
+    internal long ConnectTime => _connectTime;
+
+    //
+    // 摘要:
+    //     Id assigned from server
+    public int RemoteId { get; private set; }
+
+    //
+    // 摘要:
+    //     Current one-way ping (RTT/2) in milliseconds
+    public int Ping => _avgRtt / 2;
+
+    //
+    // 摘要:
+    //     Round trip time in milliseconds
+    public int RoundTripTime => _avgRtt;
+
+    //
+    // 摘要:
+    //     Current MTU - Maximum Transfer Unit ( maximum udp packet size without fragmentation
+    //     )
+    public int Mtu => _mtu;
+
+    //
+    // 摘要:
+    //     Delta with remote time in ticks (not accurate) positive - remote time > our time
+    public long RemoteTimeDelta => _remoteDelta;
+
+    //
+    // 摘要:
+    //     Remote UTC time (not accurate)
+    public DateTime RemoteUtcTime => new DateTime(DateTime.UtcNow.Ticks + _remoteDelta);
+
+    //
+    // 摘要:
+    //     Time since last packet received (including internal library packets) in milliseconds
+    public float TimeSinceLastPacket => _timeSinceLastPacket;
+
+    internal double ResendDelay => _resendDelay;
+
+    //
+    // 摘要:
+    //     IPEndPoint serialize
+    //
+    // 返回结果:
+    //     SocketAddress
+    public override SocketAddress Serialize()
+    {
+        return _cachedSocketAddr;
+    }
+
+    public override int GetHashCode()
+    {
+        return _cachedHashCode;
+    }
+
+    internal NetPeer(NetManager netManager, IPEndPoint remoteEndPoint, int id)
+        : base(remoteEndPoint.Address, remoteEndPoint.Port)
+    {
+        Id = id;
+        Statistics = new NetStatistics();
+        NetManager = netManager;
+        _cachedSocketAddr = base.Serialize();
+        if (NetManager.UseNativeSockets)
+        {
+            NativeAddress = new byte[_cachedSocketAddr.Size];
+            for (int i = 0; i < _cachedSocketAddr.Size; i++)
+            {
+                NativeAddress[i] = _cachedSocketAddr[i];
+            }
+        }
+
+        _cachedHashCode = base.GetHashCode();
+        ResetMtu();
+        _connectionState = ConnectionState.Connected;
+        _mergeData = new NetPacket(PacketProperty.Merged, NetConstants.MaxPacketSize);
+        _pongPacket = new NetPacket(PacketProperty.Pong, 0);
+        _pingPacket = new NetPacket(PacketProperty.Ping, 0)
+        {
+            Sequence = 1
+        };
+        _unreliableSecondQueue = new NetPacket[8];
+        _unreliableChannel = new NetPacket[8];
+        _holdedFragments = new Dictionary<ushort, IncomingFragments>();
+        _deliveredFragments = new Dictionary<ushort, ushort>();
+        _channels = new BaseChannel[netManager.ChannelsCount * 4];
+        _channelSendQueue = new ConcurrentQueue<BaseChannel>();
+    }
+
+    internal void InitiateEndPointChange()
+    {
+        ResetMtu();
+        _connectionState = ConnectionState.EndPointChange;
+    }
+
+    internal void FinishEndPointChange(IPEndPoint newEndPoint)
+    {
+        if (_connectionState != ConnectionState.EndPointChange)
+        {
+            return;
+        }
+
+        _connectionState = ConnectionState.Connected;
+        base.Address = newEndPoint.Address;
+        base.Port = newEndPoint.Port;
+        if (NetManager.UseNativeSockets)
+        {
+            NativeAddress = new byte[_cachedSocketAddr.Size];
+            for (int i = 0; i < _cachedSocketAddr.Size; i++)
+            {
+                NativeAddress[i] = _cachedSocketAddr[i];
+            }
+        }
+
+        _cachedSocketAddr = base.Serialize();
+        _cachedHashCode = base.GetHashCode();
+    }
+
+    internal void ResetMtu()
+    {
+        _finishMtu = !NetManager.MtuDiscovery;
+        if (NetManager.MtuOverride > 0)
+        {
+            OverrideMtu(NetManager.MtuOverride);
+        }
+        else
+        {
+            SetMtu(0);
+        }
+    }
+
+    private void SetMtu(int mtuIdx)
+    {
+        _mtuIdx = mtuIdx;
+        _mtu = NetConstants.PossibleMtu[mtuIdx] - NetManager.ExtraPacketSizeForLayer;
+    }
+
+    private void OverrideMtu(int mtuValue)
+    {
+        _mtu = mtuValue;
+        _finishMtu = true;
+    }
+
+    //
+    // 摘要:
+    //     Returns packets count in queue for reliable channel
+    //
+    // 参数:
+    //   channelNumber:
+    //     number of channel 0-63
+    //
+    //   ordered:
+    //     type of channel ReliableOrdered or ReliableUnordered
+    //
+    // 返回结果:
+    //     packets count in channel queue
+    public int GetPacketsCountInReliableQueue(byte channelNumber, bool ordered)
+    {
+        int num = channelNumber * 4 + (ordered ? 2 : 0);
+        BaseChannel baseChannel = _channels[num];
+        if (baseChannel == null)
+        {
+            return 0;
+        }
+
+        return ((ReliableChannel)baseChannel).PacketsInQueue;
+    }
+
+    //
+    // 摘要:
+    //     Create temporary packet (maximum size MTU - headerSize) to send later without
+    //     additional copies
+    //
+    // 参数:
+    //   deliveryMethod:
+    //     Delivery method (reliable, unreliable, etc.)
+    //
+    //   channelNumber:
+    //     Number of channel (from 0 to channelsCount - 1)
+    //
+    // 返回结果:
+    //     PooledPacket that you can use to write data starting from UserDataOffset
+    public PooledPacket CreatePacketFromPool(DeliveryMethod deliveryMethod, byte channelNumber)
+    {
+        int mtu = _mtu;
+        NetPacket netPacket = NetManager.PoolGetPacket(mtu);
+        if (deliveryMethod == DeliveryMethod.Unreliable)
+        {
+            netPacket.Property = PacketProperty.Unreliable;
+            return new PooledPacket(netPacket, mtu, 0);
+        }
+
+        netPacket.Property = PacketProperty.Channeled;
+        return new PooledPacket(netPacket, mtu, (byte)((uint)(channelNumber * 4) + (uint)deliveryMethod));
+    }
+
+    //
+    // 摘要:
+    //     Sends pooled packet without data copy
+    //
+    // 参数:
+    //   packet:
+    //     packet to send
+    //
+    //   userDataSize:
+    //     size of user data you want to send
+    public void SendPooledPacket(PooledPacket packet, int userDataSize)
+    {
+        if (_connectionState == ConnectionState.Connected)
+        {
+            packet._packet.Size = packet.UserDataOffset + userDataSize;
+            if (packet._packet.Property == PacketProperty.Channeled)
+            {
+                CreateChannel(packet._channelNumber).AddToQueue(packet._packet);
+            }
+            else
+            {
+                EnqueueUnreliable(packet._packet);
+            }
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void EnqueueUnreliable(NetPacket packet)
+    {
+        lock (_unreliableChannelLock)
+        {
+            if (_unreliablePendingCount == _unreliableChannel.Length)
+            {
+                Array.Resize(ref _unreliableChannel, _unreliablePendingCount * 2);
+            }
+
+            _unreliableChannel[_unreliablePendingCount++] = packet;
+        }
+    }
+
+    private BaseChannel CreateChannel(byte idx)
+    {
+        BaseChannel baseChannel = _channels[idx];
+        if (baseChannel != null)
+        {
+            return baseChannel;
+        }
+
+        switch ((DeliveryMethod)(byte)(idx % 4))
+        {
+            case DeliveryMethod.ReliableUnordered:
+                baseChannel = new ReliableChannel(this, ordered: false, idx);
+                break;
+            case DeliveryMethod.Sequenced:
+                baseChannel = new SequencedChannel(this, reliable: false, idx);
+                break;
+            case DeliveryMethod.ReliableOrdered:
+                baseChannel = new ReliableChannel(this, ordered: true, idx);
+                break;
+            case DeliveryMethod.ReliableSequenced:
+                baseChannel = new SequencedChannel(this, reliable: true, idx);
+                break;
+        }
+
+        BaseChannel baseChannel2 = Interlocked.CompareExchange(ref _channels[idx], baseChannel, null);
+        if (baseChannel2 != null)
+        {
+            return baseChannel2;
+        }
+
+        return baseChannel;
+    }
+
+    internal NetPeer(NetManager netManager, IPEndPoint remoteEndPoint, int id, byte connectNum, NetDataWriter connectData)
+        : this(netManager, remoteEndPoint, id)
+    {
+        _connectTime = DateTime.UtcNow.Ticks;
+        _connectionState = ConnectionState.Outgoing;
+        ConnectionNum = connectNum;
+        _connectRequestPacket = NetConnectRequestPacket.Make(connectData, remoteEndPoint.Serialize(), _connectTime, id);
+        _connectRequestPacket.ConnectionNumber = connectNum;
+        NetManager.SendRaw(_connectRequestPacket, this);
+    }
+
+    internal NetPeer(NetManager netManager, ConnectionRequest request, int id)
+        : this(netManager, request.RemoteEndPoint, id)
+    {
+        _connectTime = request.InternalPacket.ConnectionTime;
+        ConnectionNum = request.InternalPacket.ConnectionNumber;
+        RemoteId = request.InternalPacket.PeerId;
+        _connectAcceptPacket = NetConnectAcceptPacket.Make(_connectTime, ConnectionNum, id);
+        _connectionState = ConnectionState.Connected;
+        NetManager.SendRaw(_connectAcceptPacket, this);
+    }
+
+    internal void Reject(NetConnectRequestPacket requestData, byte[] data, int start, int length)
+    {
+        _connectTime = requestData.ConnectionTime;
+        _connectNum = requestData.ConnectionNumber;
+        Shutdown(data, start, length, force: false);
+    }
+
+    internal bool ProcessConnectAccept(NetConnectAcceptPacket packet)
+    {
+        if (_connectionState != ConnectionState.Outgoing)
+        {
+            return false;
+        }
+
+        if (packet.ConnectionTime != _connectTime)
+        {
+            return false;
+        }
+
+        ConnectionNum = packet.ConnectionNumber;
+        RemoteId = packet.PeerId;
+        Interlocked.Exchange(ref _timeSinceLastPacket, 0f);
+        _connectionState = ConnectionState.Connected;
+        return true;
+    }
+
+    //
+    // 摘要:
+    //     Gets maximum size of packet that will be not fragmented.
+    //
+    // 参数:
+    //   options:
+    //     Type of packet that you want send
+    //
+    // 返回结果:
+    //     size in bytes
+    public int GetMaxSinglePacketSize(DeliveryMethod options)
+    {
+        return _mtu - NetPacket.GetHeaderSize((options != DeliveryMethod.Unreliable) ? PacketProperty.Channeled : PacketProperty.Unreliable);
+    }
+
+    //
+    // 摘要:
+    //     Send data to peer with delivery event called
+    //
+    // 参数:
+    //   data:
+    //     Data
+    //
+    //   channelNumber:
+    //     Number of channel (from 0 to channelsCount - 1)
+    //
+    //   deliveryMethod:
+    //     Delivery method (reliable, unreliable, etc.)
+    //
+    //   userData:
+    //     User data that will be received in DeliveryEvent
+    //
+    // 异常:
+    //   T:System.ArgumentException:
+    //     If you trying to send unreliable packet type
+    public void SendWithDeliveryEvent(byte[] data, byte channelNumber, DeliveryMethod deliveryMethod, object userData)
+    {
+        if (deliveryMethod != DeliveryMethod.ReliableOrdered && deliveryMethod != 0)
+        {
+            throw new ArgumentException("Delivery event will work only for ReliableOrdered/Unordered packets");
+        }
+
+        SendInternal(data, 0, data.Length, channelNumber, deliveryMethod, userData);
+    }
+
+    //
+    // 摘要:
+    //     Send data to peer with delivery event called
+    //
+    // 参数:
+    //   data:
+    //     Data
+    //
+    //   start:
+    //     Start of data
+    //
+    //   length:
+    //     Length of data
+    //
+    //   channelNumber:
+    //     Number of channel (from 0 to channelsCount - 1)
+    //
+    //   deliveryMethod:
+    //     Delivery method (reliable, unreliable, etc.)
+    //
+    //   userData:
+    //     User data that will be received in DeliveryEvent
+    //
+    // 异常:
+    //   T:System.ArgumentException:
+    //     If you trying to send unreliable packet type
+    public void SendWithDeliveryEvent(byte[] data, int start, int length, byte channelNumber, DeliveryMethod deliveryMethod, object userData)
+    {
+        if (deliveryMethod != DeliveryMethod.ReliableOrdered && deliveryMethod != 0)
+        {
+            throw new ArgumentException("Delivery event will work only for ReliableOrdered/Unordered packets");
+        }
+
+        SendInternal(data, start, length, channelNumber, deliveryMethod, userData);
+    }
+
+    //
+    // 摘要:
+    //     Send data to peer with delivery event called
+    //
+    // 参数:
+    //   dataWriter:
+    //     Data
+    //
+    //   channelNumber:
+    //     Number of channel (from 0 to channelsCount - 1)
+    //
+    //   deliveryMethod:
+    //     Delivery method (reliable, unreliable, etc.)
+    //
+    //   userData:
+    //     User data that will be received in DeliveryEvent
+    //
+    // 异常:
+    //   T:System.ArgumentException:
+    //     If you trying to send unreliable packet type
+    public void SendWithDeliveryEvent(NetDataWriter dataWriter, byte channelNumber, DeliveryMethod deliveryMethod, object userData)
+    {
+        if (deliveryMethod != DeliveryMethod.ReliableOrdered && deliveryMethod != 0)
+        {
+            throw new ArgumentException("Delivery event will work only for ReliableOrdered/Unordered packets");
+        }
+
+        SendInternal(dataWriter.Data, 0, dataWriter.Length, channelNumber, deliveryMethod, userData);
+    }
+
+    //
+    // 摘要:
+    //     Send data to peer (channel - 0)
+    //
+    // 参数:
+    //   data:
+    //     Data
+    //
+    //   deliveryMethod:
+    //     Send options (reliable, unreliable, etc.)
+    //
+    // 异常:
+    //   T:LiteNetLib.TooBigPacketException:
+    //     If size exceeds maximum limit:
+    //
+    //     MTU - headerSize bytes for Unreliable
+    //
+    //     Fragment count exceeded ushort.MaxValue
+    public void Send(byte[] data, DeliveryMethod deliveryMethod)
+    {
+        SendInternal(data, 0, data.Length, 0, deliveryMethod, null);
+    }
+
+    //
+    // 摘要:
+    //     Send data to peer (channel - 0)
+    //
+    // 参数:
+    //   dataWriter:
+    //     DataWriter with data
+    //
+    //   deliveryMethod:
+    //     Send options (reliable, unreliable, etc.)
+    //
+    // 异常:
+    //   T:LiteNetLib.TooBigPacketException:
+    //     If size exceeds maximum limit:
+    //
+    //     MTU - headerSize bytes for Unreliable
+    //
+    //     Fragment count exceeded ushort.MaxValue
+    public void Send(NetDataWriter dataWriter, DeliveryMethod deliveryMethod)
+    {
+        SendInternal(dataWriter.Data, 0, dataWriter.Length, 0, deliveryMethod, null);
+    }
+
+    //
+    // 摘要:
+    //     Send data to peer (channel - 0)
+    //
+    // 参数:
+    //   data:
+    //     Data
+    //
+    //   start:
+    //     Start of data
+    //
+    //   length:
+    //     Length of data
+    //
+    //   options:
+    //     Send options (reliable, unreliable, etc.)
+    //
+    // 异常:
+    //   T:LiteNetLib.TooBigPacketException:
+    //     If size exceeds maximum limit:
+    //
+    //     MTU - headerSize bytes for Unreliable
+    //
+    //     Fragment count exceeded ushort.MaxValue
+    public void Send(byte[] data, int start, int length, DeliveryMethod options)
+    {
+        SendInternal(data, start, length, 0, options, null);
+    }
+
+    //
+    // 摘要:
+    //     Send data to peer
+    //
+    // 参数:
+    //   data:
+    //     Data
+    //
+    //   channelNumber:
+    //     Number of channel (from 0 to channelsCount - 1)
+    //
+    //   deliveryMethod:
+    //     Send options (reliable, unreliable, etc.)
+    //
+    // 异常:
+    //   T:LiteNetLib.TooBigPacketException:
+    //     If size exceeds maximum limit:
+    //
+    //     MTU - headerSize bytes for Unreliable
+    //
+    //     Fragment count exceeded ushort.MaxValue
+    public void Send(byte[] data, byte channelNumber, DeliveryMethod deliveryMethod)
+    {
+        SendInternal(data, 0, data.Length, channelNumber, deliveryMethod, null);
+    }
+
+    //
+    // 摘要:
+    //     Send data to peer
+    //
+    // 参数:
+    //   dataWriter:
+    //     DataWriter with data
+    //
+    //   channelNumber:
+    //     Number of channel (from 0 to channelsCount - 1)
+    //
+    //   deliveryMethod:
+    //     Send options (reliable, unreliable, etc.)
+    //
+    // 异常:
+    //   T:LiteNetLib.TooBigPacketException:
+    //     If size exceeds maximum limit:
+    //
+    //     MTU - headerSize bytes for Unreliable
+    //
+    //     Fragment count exceeded ushort.MaxValue
+    public void Send(NetDataWriter dataWriter, byte channelNumber, DeliveryMethod deliveryMethod)
+    {
+        SendInternal(dataWriter.Data, 0, dataWriter.Length, channelNumber, deliveryMethod, null);
+    }
+
+    //
+    // 摘要:
+    //     Send data to peer
+    //
+    // 参数:
+    //   data:
+    //     Data
+    //
+    //   start:
+    //     Start of data
+    //
+    //   length:
+    //     Length of data
+    //
+    //   channelNumber:
+    //     Number of channel (from 0 to channelsCount - 1)
+    //
+    //   deliveryMethod:
+    //     Delivery method (reliable, unreliable, etc.)
+    //
+    // 异常:
+    //   T:LiteNetLib.TooBigPacketException:
+    //     If size exceeds maximum limit:
+    //
+    //     MTU - headerSize bytes for Unreliable
+    //
+    //     Fragment count exceeded ushort.MaxValue
+    public void Send(byte[] data, int start, int length, byte channelNumber, DeliveryMethod deliveryMethod)
+    {
+        SendInternal(data, start, length, channelNumber, deliveryMethod, null);
+    }
+
+    private void SendInternal(byte[] data, int start, int length, byte channelNumber, DeliveryMethod deliveryMethod, object userData)
+    {
+        if (_connectionState != ConnectionState.Connected || channelNumber >= _channels.Length)
+        {
+            return;
+        }
+
+        BaseChannel baseChannel = null;
+        PacketProperty property;
+        if (deliveryMethod == DeliveryMethod.Unreliable)
+        {
+            property = PacketProperty.Unreliable;
+        }
+        else
+        {
+            property = PacketProperty.Channeled;
+            baseChannel = CreateChannel((byte)((uint)(channelNumber * 4) + (uint)deliveryMethod));
+        }
+
+        int headerSize = NetPacket.GetHeaderSize(property);
+        int mtu = _mtu;
+        if (length + headerSize > mtu)
+        {
+            if (deliveryMethod != DeliveryMethod.ReliableOrdered && deliveryMethod != 0)
+            {
+                throw new TooBigPacketException("Unreliable or ReliableSequenced packet size exceeded maximum of " + (mtu - headerSize) + " bytes, Check allowed size by GetMaxSinglePacketSize()");
+            }
+
+            int num = mtu - headerSize - 6;
+            int num2 = length / num + ((length % num != 0) ? 1 : 0);
+            if (num2 > 65535)
+            {
+                throw new TooBigPacketException("Data was split in " + num2 + " fragments, which exceeds " + ushort.MaxValue);
+            }
+
+            ushort fragmentId = (ushort)Interlocked.Increment(ref _fragmentId);
+            for (ushort num3 = 0; num3 < num2; num3++)
+            {
+                int num4 = ((length > num) ? num : length);
+                NetPacket netPacket = NetManager.PoolGetPacket(headerSize + num4 + 6);
+                netPacket.Property = property;
+                netPacket.UserData = userData;
+                netPacket.FragmentId = fragmentId;
+                netPacket.FragmentPart = num3;
+                netPacket.FragmentsTotal = (ushort)num2;
+                netPacket.MarkFragmented();
+                Buffer.BlockCopy(data, start + num3 * num, netPacket.RawData, 10, num4);
+                baseChannel.AddToQueue(netPacket);
+                length -= num4;
+            }
+        }
+        else
+        {
+            NetPacket netPacket2 = NetManager.PoolGetPacket(headerSize + length);
+            netPacket2.Property = property;
+            Buffer.BlockCopy(data, start, netPacket2.RawData, headerSize, length);
+            netPacket2.UserData = userData;
+            if (baseChannel == null)
+            {
+                EnqueueUnreliable(netPacket2);
+            }
+            else
+            {
+                baseChannel.AddToQueue(netPacket2);
+            }
+        }
+    }
+
+    public void Disconnect(byte[] data)
+    {
+        NetManager.DisconnectPeer(this, data);
+    }
+
+    public void Disconnect(NetDataWriter writer)
+    {
+        NetManager.DisconnectPeer(this, writer);
+    }
+
+    public void Disconnect(byte[] data, int start, int count)
+    {
+        NetManager.DisconnectPeer(this, data, start, count);
+    }
+
+    public void Disconnect()
+    {
+        NetManager.DisconnectPeer(this);
+    }
+
+    internal DisconnectResult ProcessDisconnect(NetPacket packet)
+    {
+        if ((_connectionState == ConnectionState.Connected || _connectionState == ConnectionState.Outgoing) && packet.Size >= 9 && BitConverter.ToInt64(packet.RawData, 1) == _connectTime && packet.ConnectionNumber == _connectNum)
+        {
+            if (_connectionState != ConnectionState.Connected)
+            {
+                return DisconnectResult.Reject;
+            }
+
+            return DisconnectResult.Disconnect;
+        }
+
+        return DisconnectResult.None;
+    }
+
+    internal void AddToReliableChannelSendQueue(BaseChannel channel)
+    {
+        _channelSendQueue.Enqueue(channel);
+    }
+
+    internal ShutdownResult Shutdown(byte[] data, int start, int length, bool force)
+    {
+        lock (_shutdownLock)
+        {
+            if (_connectionState == ConnectionState.Disconnected || _connectionState == ConnectionState.ShutdownRequested)
+            {
+                return ShutdownResult.None;
+            }
+
+            ShutdownResult result = ((_connectionState != ConnectionState.Connected) ? ShutdownResult.Success : ShutdownResult.WasConnected);
+            if (force)
+            {
+                _connectionState = ConnectionState.Disconnected;
+                return result;
+            }
+
+            Interlocked.Exchange(ref _timeSinceLastPacket, 0f);
+            _shutdownPacket = new NetPacket(PacketProperty.Disconnect, length)
+            {
+                ConnectionNumber = _connectNum
+            };
+            FastBitConverter.GetBytes(_shutdownPacket.RawData, 1, _connectTime);
+            if (_shutdownPacket.Size >= _mtu)
+            {
+                NetDebug.WriteError("[Peer] Disconnect additional data size more than MTU - 8!");
+            }
+            else if (data != null && length > 0)
+            {
+                Buffer.BlockCopy(data, start, _shutdownPacket.RawData, 9, length);
+            }
+
+            _connectionState = ConnectionState.ShutdownRequested;
+            NetManager.SendRaw(_shutdownPacket, this);
+            return result;
+        }
+    }
+
+    private void UpdateRoundTripTime(int roundTripTime)
+    {
+        _rtt += roundTripTime;
+        _rttCount++;
+        _avgRtt = _rtt / _rttCount;
+        _resendDelay = 25.0 + (double)_avgRtt * 2.1;
+    }
+
+    internal void AddReliablePacket(DeliveryMethod method, NetPacket p)
+    {
+        if (p.IsFragmented)
+        {
+            ushort fragmentId = p.FragmentId;
+            byte channelId = p.ChannelId;
+            if (!_holdedFragments.TryGetValue(fragmentId, out var value))
+            {
+                value = new IncomingFragments
+                {
+                    Fragments = new NetPacket[p.FragmentsTotal],
+                    ChannelId = p.ChannelId
+                };
+                _holdedFragments.Add(fragmentId, value);
+            }
+
+            NetPacket[] fragments = value.Fragments;
+            if (p.FragmentPart >= fragments.Length || fragments[p.FragmentPart] != null || p.ChannelId != value.ChannelId)
+            {
+                NetManager.PoolRecycle(p);
+                NetDebug.WriteError("Invalid fragment packet");
+                return;
+            }
+
+            fragments[p.FragmentPart] = p;
+            value.ReceivedCount++;
+            value.TotalSize += p.Size - 10;
+            if (value.ReceivedCount != fragments.Length)
+            {
+                return;
+            }
+
+            NetPacket netPacket = NetManager.PoolGetPacket(value.TotalSize);
+            int num = 0;
+            for (int i = 0; i < value.ReceivedCount; i++)
+            {
+                NetPacket netPacket2 = fragments[i];
+                int num2 = netPacket2.Size - 10;
+                if (num + num2 > netPacket.RawData.Length)
+                {
+                    _holdedFragments.Remove(fragmentId);
+                    NetDebug.WriteError($"Fragment error pos: {num + num2} >= resultPacketSize: {netPacket.RawData.Length} , totalSize: {value.TotalSize}");
+                    return;
+                }
+
+                if (netPacket2.Size > netPacket2.RawData.Length)
+                {
+                    _holdedFragments.Remove(fragmentId);
+                    NetDebug.WriteError($"Fragment error size: {netPacket2.Size} > fragment.RawData.Length: {netPacket2.RawData.Length}");
+                    return;
+                }
+
+                Buffer.BlockCopy(netPacket2.RawData, 10, netPacket.RawData, num, num2);
+                num += num2;
+                NetManager.PoolRecycle(netPacket2);
+                fragments[i] = null;
+            }
+
+            _holdedFragments.Remove(fragmentId);
+            NetManager.CreateReceiveEvent(netPacket, method, (byte)(channelId / 4), 0, this);
+        }
+        else
+        {
+            NetManager.CreateReceiveEvent(p, method, (byte)(p.ChannelId / 4), 4, this);
+        }
+    }
+
+    private void ProcessMtuPacket(NetPacket packet)
+    {
+        if (packet.Size < NetConstants.PossibleMtu[0])
+        {
+            return;
+        }
+
+        int num = BitConverter.ToInt32(packet.RawData, 1);
+        int num2 = BitConverter.ToInt32(packet.RawData, packet.Size - 4);
+        if (num != packet.Size || num != num2 || num > NetConstants.MaxPacketSize)
+        {
+            NetDebug.WriteError($"[MTU] Broken packet. RMTU {num}, EMTU {num2}, PSIZE {packet.Size}");
+        }
+        else if (packet.Property == PacketProperty.MtuCheck)
+        {
+            _mtuCheckAttempts = 0;
+            packet.Property = PacketProperty.MtuOk;
+            NetManager.SendRawAndRecycle(packet, this);
+        }
+        else if (num > _mtu && !_finishMtu && num == NetConstants.PossibleMtu[_mtuIdx + 1] - NetManager.ExtraPacketSizeForLayer)
+        {
+            lock (_mtuMutex)
+            {
+                SetMtu(_mtuIdx + 1);
+            }
+
+            if (_mtuIdx == NetConstants.PossibleMtu.Length - 1)
+            {
+                _finishMtu = true;
+            }
+
+            NetManager.PoolRecycle(packet);
+        }
+    }
+
+    private void UpdateMtuLogic(float deltaTime)
+    {
+        if (_finishMtu)
+        {
+            return;
+        }
+
+        _mtuCheckTimer += deltaTime;
+        if (_mtuCheckTimer < 1000f)
+        {
+            return;
+        }
+
+        _mtuCheckTimer = 0f;
+        _mtuCheckAttempts++;
+        if (_mtuCheckAttempts >= 4)
+        {
+            _finishMtu = true;
+            return;
+        }
+
+        lock (_mtuMutex)
+        {
+            if (_mtuIdx < NetConstants.PossibleMtu.Length - 1)
+            {
+                int num = NetConstants.PossibleMtu[_mtuIdx + 1] - NetManager.ExtraPacketSizeForLayer;
+                NetPacket netPacket = NetManager.PoolGetPacket(num);
+                netPacket.Property = PacketProperty.MtuCheck;
+                FastBitConverter.GetBytes(netPacket.RawData, 1, num);
+                FastBitConverter.GetBytes(netPacket.RawData, netPacket.Size - 4, num);
+                if (NetManager.SendRawAndRecycle(netPacket, this) <= 0)
+                {
+                    _finishMtu = true;
+                }
+            }
+        }
+    }
+
+    internal ConnectRequestResult ProcessConnectRequest(NetConnectRequestPacket connRequest)
+    {
+        switch (_connectionState)
+        {
+            case ConnectionState.Outgoing:
+                {
+                    if (connRequest.ConnectionTime < _connectTime)
+                    {
+                        return ConnectRequestResult.P2PLose;
+                    }
+
+                    if (connRequest.ConnectionTime != _connectTime)
+                    {
+                        break;
+                    }
+
+                    byte[] targetAddress = connRequest.TargetAddress;
+                    for (int num = _cachedSocketAddr.Size - 1; num >= 0; num--)
+                    {
+                        byte b = _cachedSocketAddr[num];
+                        if (b != targetAddress[num] && b < targetAddress[num])
+                        {
+                            return ConnectRequestResult.P2PLose;
+                        }
+                    }
+
+                    break;
+                }
+            case ConnectionState.Connected:
+                if (connRequest.ConnectionTime == _connectTime)
+                {
+                    NetManager.SendRaw(_connectAcceptPacket, this);
+                }
+                else if (connRequest.ConnectionTime > _connectTime)
+                {
+                    return ConnectRequestResult.Reconnection;
+                }
+
+                break;
+            case ConnectionState.ShutdownRequested:
+            case ConnectionState.Disconnected:
+                if (connRequest.ConnectionTime >= _connectTime)
+                {
+                    return ConnectRequestResult.NewConnection;
+                }
+
+                break;
+        }
+
+        return ConnectRequestResult.None;
+    }
+
+    internal void ProcessPacket(NetPacket packet)
+    {
+        if (_connectionState == ConnectionState.Outgoing || _connectionState == ConnectionState.Disconnected)
+        {
+            NetManager.PoolRecycle(packet);
+            return;
+        }
+
+        if (packet.Property == PacketProperty.ShutdownOk)
+        {
+            if (_connectionState == ConnectionState.ShutdownRequested)
+            {
+                _connectionState = ConnectionState.Disconnected;
+            }
+
+            NetManager.PoolRecycle(packet);
+            return;
+        }
+
+        if (packet.ConnectionNumber != _connectNum)
+        {
+            NetManager.PoolRecycle(packet);
+            return;
+        }
+
+        Interlocked.Exchange(ref _timeSinceLastPacket, 0f);
+        switch (packet.Property)
+        {
+            case PacketProperty.Merged:
+                {
+                    int num2 = 1;
+                    while (num2 < packet.Size)
+                    {
+                        ushort num3 = BitConverter.ToUInt16(packet.RawData, num2);
+                        if (num3 == 0)
+                        {
+                            break;
+                        }
+
+                        num2 += 2;
+                        if (packet.RawData.Length - num2 < num3)
+                        {
+                            break;
+                        }
+
+                        NetPacket netPacket = NetManager.PoolGetPacket(num3);
+                        Buffer.BlockCopy(packet.RawData, num2, netPacket.RawData, 0, num3);
+                        netPacket.Size = num3;
+                        if (!netPacket.Verify())
+                        {
+                            break;
+                        }
+
+                        num2 += num3;
+                        ProcessPacket(netPacket);
+                    }
+
+                    NetManager.PoolRecycle(packet);
+                    break;
+                }
+            case PacketProperty.Ping:
+                if (NetUtils.RelativeSequenceNumber(packet.Sequence, _pongPacket.Sequence) > 0)
+                {
+                    FastBitConverter.GetBytes(_pongPacket.RawData, 3, DateTime.UtcNow.Ticks);
+                    _pongPacket.Sequence = packet.Sequence;
+                    NetManager.SendRaw(_pongPacket, this);
+                }
+
+                NetManager.PoolRecycle(packet);
+                break;
+            case PacketProperty.Pong:
+                if (packet.Sequence == _pingPacket.Sequence)
+                {
+                    _pingTimer.Stop();
+                    int num = (int)_pingTimer.ElapsedMilliseconds;
+                    _remoteDelta = BitConverter.ToInt64(packet.RawData, 3) + (long)num * 10000L / 2 - DateTime.UtcNow.Ticks;
+                    UpdateRoundTripTime(num);
+                    NetManager.ConnectionLatencyUpdated(this, num / 2);
+                }
+
+                NetManager.PoolRecycle(packet);
+                break;
+            case PacketProperty.Channeled:
+            case PacketProperty.Ack:
+                {
+                    if (packet.ChannelId >= _channels.Length)
+                    {
+                        NetManager.PoolRecycle(packet);
+                        break;
+                    }
+
+                    BaseChannel baseChannel = _channels[packet.ChannelId] ?? ((packet.Property == PacketProperty.Ack) ? null : CreateChannel(packet.ChannelId));
+                    if (baseChannel != null && !baseChannel.ProcessPacket(packet))
+                    {
+                        NetManager.PoolRecycle(packet);
+                    }
+
+                    break;
+                }
+            case PacketProperty.Unreliable:
+                NetManager.CreateReceiveEvent(packet, DeliveryMethod.Unreliable, 0, 1, this);
+                break;
+            case PacketProperty.MtuCheck:
+            case PacketProperty.MtuOk:
+                ProcessMtuPacket(packet);
+                break;
+            default:
+                NetDebug.WriteError("Error! Unexpected packet type: " + packet.Property);
+                break;
+        }
+    }
+
+    private void SendMerged()
+    {
+        if (_mergeCount != 0)
+        {
+            int num = ((_mergeCount <= 1) ? NetManager.SendRaw(_mergeData.RawData, 3, _mergePos - 2, this) : NetManager.SendRaw(_mergeData.RawData, 0, 1 + _mergePos, this));
+            if (NetManager.EnableStatistics)
+            {
+                Statistics.IncrementPacketsSent();
+                Statistics.AddBytesSent(num);
+            }
+
+            _mergePos = 0;
+            _mergeCount = 0;
+        }
+    }
+
+    internal void SendUserData(NetPacket packet)
+    {
+        packet.ConnectionNumber = _connectNum;
+        int num = 1 + packet.Size + 2;
+        if (num + 20 >= _mtu)
+        {
+            int num2 = NetManager.SendRaw(packet, this);
+            if (NetManager.EnableStatistics)
+            {
+                Statistics.IncrementPacketsSent();
+                Statistics.AddBytesSent(num2);
+            }
+
+            return;
+        }
+
+        if (_mergePos + num > _mtu)
+        {
+            SendMerged();
+        }
+
+        FastBitConverter.GetBytes(_mergeData.RawData, _mergePos + 1, (ushort)packet.Size);
+        Buffer.BlockCopy(packet.RawData, 0, _mergeData.RawData, _mergePos + 1 + 2, packet.Size);
+        _mergePos += packet.Size + 2;
+        _mergeCount++;
+    }
+
+    internal void Update(float deltaTime)
+    {
+        _timeSinceLastPacket += deltaTime;
+        switch (_connectionState)
+        {
+            case ConnectionState.Connected:
+                if (_timeSinceLastPacket > (float)NetManager.DisconnectTimeout)
+                {
+                    NetManager.DisconnectPeerForce(this, DisconnectReason.Timeout, SocketError.Success, null);
+                    return;
+                }
+
+                break;
+            case ConnectionState.ShutdownRequested:
+                if (_timeSinceLastPacket > (float)NetManager.DisconnectTimeout)
+                {
+                    _connectionState = ConnectionState.Disconnected;
+                    return;
+                }
+
+                _shutdownTimer += deltaTime;
+                if (_shutdownTimer >= 300f)
+                {
+                    _shutdownTimer = 0f;
+                    NetManager.SendRaw(_shutdownPacket, this);
+                }
+
+                return;
+            case ConnectionState.Outgoing:
+                _connectTimer += deltaTime;
+                if (_connectTimer > (float)NetManager.ReconnectDelay)
+                {
+                    _connectTimer = 0f;
+                    _connectAttempts++;
+                    if (_connectAttempts > NetManager.MaxConnectAttempts)
+                    {
+                        NetManager.DisconnectPeerForce(this, DisconnectReason.ConnectionFailed, SocketError.Success, null);
+                    }
+                    else
+                    {
+                        NetManager.SendRaw(_connectRequestPacket, this);
+                    }
+                }
+
+                return;
+            case ConnectionState.Disconnected:
+                return;
+        }
+
+        _pingSendTimer += deltaTime;
+        if (_pingSendTimer >= (float)NetManager.PingInterval)
+        {
+            _pingSendTimer = 0f;
+            _pingPacket.Sequence++;
+            if (_pingTimer.IsRunning)
+            {
+                UpdateRoundTripTime((int)_pingTimer.ElapsedMilliseconds);
+            }
+
+            _pingTimer.Restart();
+            NetManager.SendRaw(_pingPacket, this);
+        }
+
+        _rttResetTimer += deltaTime;
+        if (_rttResetTimer >= (float)(NetManager.PingInterval * 3))
+        {
+            _rttResetTimer = 0f;
+            _rtt = _avgRtt;
+            _rttCount = 1;
+        }
+
+        UpdateMtuLogic(deltaTime);
+        int count = _channelSendQueue.Count;
+        BaseChannel result;
+        while (count-- > 0 && _channelSendQueue.TryDequeue(out result))
+        {
+            if (result.SendAndCheckQueue())
+            {
+                _channelSendQueue.Enqueue(result);
+            }
+        }
+
+        if (_unreliablePendingCount > 0)
+        {
+            int unreliablePendingCount;
+            lock (_unreliableChannelLock)
+            {
+                NetPacket[] unreliableSecondQueue = _unreliableSecondQueue;
+                NetPacket[] unreliableChannel = _unreliableChannel;
+                _unreliableChannel = unreliableSecondQueue;
+                _unreliableSecondQueue = unreliableChannel;
+                unreliablePendingCount = _unreliablePendingCount;
+                _unreliablePendingCount = 0;
+            }
+
+            for (int i = 0; i < unreliablePendingCount; i++)
+            {
+                NetPacket packet = _unreliableSecondQueue[i];
+                SendUserData(packet);
+                NetManager.PoolRecycle(packet);
+            }
+        }
+
+        SendMerged();
+    }
+
+    internal void RecycleAndDeliver(NetPacket packet)
+    {
+        if (packet.UserData != null)
+        {
+            if (packet.IsFragmented)
+            {
+                _deliveredFragments.TryGetValue(packet.FragmentId, out var value);
+                value++;
+                if (value == packet.FragmentsTotal)
+                {
+                    NetManager.MessageDelivered(this, packet.UserData);
+                    _deliveredFragments.Remove(packet.FragmentId);
+                }
+                else
+                {
+                    _deliveredFragments[packet.FragmentId] = value;
+                }
+            }
+            else
+            {
+                NetManager.MessageDelivered(this, packet.UserData);
+            }
+
+            packet.UserData = null;
+        }
+
+        NetManager.PoolRecycle(packet);
+    }
+}
+#if false // 反编译日志
+缓存中的 225 项
+------------------
+解析: "netstandard, Version=2.0.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51"
+找到单个程序集: "netstandard, Version=2.1.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51"
+警告: 版本不匹配。应为: "2.0.0.0"，实际为: "2.1.0.0"
+从以下位置加载: "D:\devApp\Unity\2022.3.54f1c1\Editor\Data\NetStandard\ref\2.1.0\netstandard.dll"
+------------------
+解析: "System.Runtime.InteropServices, Version=2.0.0.0, Culture=neutral, PublicKeyToken=null"
+找到单个程序集: "System.Runtime.InteropServices, Version=4.1.2.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a"
+警告: 版本不匹配。应为: "2.0.0.0"，实际为: "4.1.2.0"
+从以下位置加载: "D:\devApp\Unity\2022.3.54f1c1\Editor\Data\NetStandard\compat\2.1.0\shims\netstandard\System.Runtime.InteropServices.dll"
+------------------
+解析: "System.Runtime.CompilerServices.Unsafe, Version=2.0.0.0, Culture=neutral, PublicKeyToken=null"
+无法按名称“System.Runtime.CompilerServices.Unsafe, Version=2.0.0.0, Culture=neutral, PublicKeyToken=null”查找 
+------------------
+解析: "netstandard, Version=2.1.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51"
+找到单个程序集: "netstandard, Version=2.1.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51"
+从以下位置加载: "D:\devApp\Unity\2022.3.54f1c1\Editor\Data\NetStandard\ref\2.1.0\netstandard.dll"
+#endif

@@ -43,14 +43,18 @@ namespace HFantasy.Script.Player.Actions
             }
             var controller = GetComponent<CharacterController>();
             var animator = GetComponent<Animator>();
-            var mainCamera = Camera.main.transform;
+            Transform mainCameraTransform = null;
+            if (Camera.main != null)
+            {
+                mainCameraTransform = Camera.main.transform;
+            }
             playerEntity = entity;
             movement = new CharactorMovementHandler(
                controller,
                animator,
                config,
                groundCheck,
-               mainCamera);
+               mainCameraTransform);
             combat = new CharactorCombatHandler(playerEntity, controller, animator);
 
             stateManager = new StateManager();

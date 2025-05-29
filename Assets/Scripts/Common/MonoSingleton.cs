@@ -43,7 +43,7 @@ namespace HFantasy.Script.Common
 
         protected virtual void Awake()
         {
-            Debug.Log($"[MonoSingleton] {typeof(T).Name} Awake called.");
+            Debug.Log($"[MonoSingleton] {typeof(T).Name} 单例已生成");
             if (_instance != null && _instance != this)
             {
                 Destroy(gameObject);

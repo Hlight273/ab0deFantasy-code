@@ -6,7 +6,7 @@ using UnityEngine;
 namespace HFantasy.Script.UI
 {
 
-
+    [NonPersistentSingletonAttribute]
     public class DamagePopupManager : MonoSingleton<DamagePopupManager>
     {
         [SerializeField] private Canvas damageCanvas;

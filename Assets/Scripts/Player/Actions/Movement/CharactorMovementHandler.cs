@@ -113,6 +113,10 @@ namespace HFantasy.Script.Player.Actions.Movement
 
         private Vector3 GetCameraRelativeDirection(Vector2 input)
         {
+            if (cam == null)//不是我操控的玩家就用世界方向
+            {
+                return new Vector3(input.x, 0f, input.y).normalized;
+            }
             Vector3 forward = cam.forward;
             Vector3 right = cam.right;
             forward.y = 0f;

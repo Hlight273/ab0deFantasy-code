@@ -1,4 +1,4 @@
-using HFantasy.Script.Network.Core;
+
 using HFantasy.Script.UI.Base;
 using HFantasy.Script.UI.MainMenu.Animations;
 using HFantasy.Script.UI.MultiPlayer;
@@ -78,7 +78,7 @@ namespace HFantasy.Script.UI.MainMenu
 
         private void OnMultiPlayerClicked()
         {
-            model.LoadSaveSlots(singleplayGroup, true);
+            model.LoadSaveSlots(singleplayGroup);
             model.PushState(MainMenuState.MultiPlayer);
         }
 
@@ -112,11 +112,11 @@ namespace HFantasy.Script.UI.MainMenu
                 currentUI = newUI;
             }
 
-            //特殊状态处理
-            if (newState == MainMenuState.Main && NetworkManager.Instance != null)
-            {
-                NetworkManager.Instance.Disconnect();
-            }
+            ////特殊状态处理
+            //if (newState == MainMenuState.Main && NetworkManagerImpl.Instance != null)
+            //{
+               
+            //}
 
         }
 
